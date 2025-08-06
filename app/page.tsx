@@ -72,7 +72,7 @@ export default function HomePage() {
     setProjects(updatedProjects)
     setNewProject({ name: "", description: "" })
     setIsCreateDialogOpen(false)
-    
+
     // Navigate to the new project using Next.js router
     router.push(`/${project.shortId}`)
   }
@@ -157,7 +157,7 @@ export default function HomePage() {
         <meta name="author" content="Satyendra (s4tyendra)" />
         <meta name="robots" content="index, follow" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        
+
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Free Online Drawing Tool - Excalidraw Project Manager" />
@@ -165,20 +165,20 @@ export default function HomePage() {
         <meta property="og:image" content="/placeholder-logo.png" />
         <meta property="og:url" content={typeof window !== "undefined" ? window.location.href : ""} />
         <meta property="og:site_name" content="Excalidraw Project Manager" />
-        
+
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Free Online Drawing Tool - Excalidraw Project Manager" />
         <meta name="twitter:description" content="Create beautiful diagrams, wireframes, and sketches with our free online collaborative drawing tool." />
         <meta name="twitter:image" content="/placeholder-logo.png" />
         <meta name="twitter:creator" content="@s4tyendra" />
-        
+
         {/* Additional SEO */}
         <meta name="theme-color" content="#3b82f6" />
         <link rel="canonical" href={typeof window !== "undefined" ? window.location.href : ""} />
-        
+
         {/* Structured Data */}
-        <script 
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
@@ -231,43 +231,6 @@ export default function HomePage() {
               </Button>
             </nav>
           </header>
-
-          {/* Feature highlights for SEO */}
-                    {/* Feature highlights for SEO */}
-          <section className="mb-8 p-6 bg-muted/50 rounded-lg">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-semibold">Why Choose Our Drawing Tool?</h2>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/features">
-                  View All Features
-                  <Layers className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div className="flex items-start gap-2">
-                <Layers className="w-5 h-5 text-primary mt-0.5" />
-                <div>
-                  <h3 className="font-medium">Project Management</h3>
-                  <p className="text-muted-foreground">Organize and manage multiple drawing projects efficiently</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <Share2 className="w-5 h-5 text-primary mt-0.5" />
-                <div>
-                  <h3 className="font-medium">Export & Import</h3>
-                  <p className="text-muted-foreground">Backup and share your projects with JSON export/import</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <Search className="w-5 h-5 text-primary mt-0.5" />
-                <div>
-                  <h3 className="font-medium">Smart Search</h3>
-                  <p className="text-muted-foreground">Find your projects quickly with intelligent search</p>
-                </div>
-              </div>
-            </div>
-          </section>
 
           <section aria-label="Project search">
             <div className="p-4 border-b mb-4">
@@ -365,7 +328,7 @@ export default function HomePage() {
               </section>
             )}
           </main>
-    </div>
+        </div>
       )}
 
       {/* Dialogs that should always be available */}
@@ -442,6 +405,42 @@ export default function HomePage() {
           )}
         </DialogContent>
       </Dialog>
+  <footer className="fixed bottom-0 items-left left-0 right-0 m-12 text-left text-sm text-muted-foreground">
+        <section className="mb-8 p-6 bg-muted/50 rounded-lg">
+          <div className="flex justify-between items-start mb-4">
+            <h2 className="text-xl font-semibold">Excalidraw - DevH</h2>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/features">
+                View All Features
+                <Layers className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="flex items-start gap-2">
+              <Layers className="w-5 h-5 text-primary mt-0.5" />
+              <div>
+                <h3 className="font-medium">Project Management</h3>
+                <p className="text-muted-foreground">Organize and manage multiple drawing projects efficiently</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Share2 className="w-5 h-5 text-primary mt-0.5" />
+              <div>
+                <h3 className="font-medium">Export & Import</h3>
+                <p className="text-muted-foreground">Backup and share your projects with JSON export/import</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Search className="w-5 h-5 text-primary mt-0.5" />
+              <div>
+                <h3 className="font-medium">Smart Search</h3>
+                <p className="text-muted-foreground">Find your projects quickly with intelligent search</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </footer>
     </>
   )
 }
