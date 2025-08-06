@@ -193,7 +193,7 @@ export default function HomePage() {
         <div className="container mx-auto p-6" suppressHydrationWarning>
           <header className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold">Free Online Drawing Tool - Excalidraw Project Manager</h1>
+              <h1 className="text-3xl font-bold">Free Online Drawing Tool - Excalidraw</h1>
               <p className="text-muted-foreground mt-2">
                 Create beautiful diagrams, wireframes, and collaborative sketches. Manage multiple drawing projects with ease.
               </p>
@@ -222,12 +222,28 @@ export default function HomePage() {
                   Export/Import
                 </Link>
               </Button>
+
+              <Button asChild variant="outline" size="sm">
+                <Link href="/features" aria-label="View feature comparison">
+                  <Layers className="w-4 h-4 mr-2" />
+                  Features
+                </Link>
+              </Button>
             </nav>
           </header>
 
           {/* Feature highlights for SEO */}
+                    {/* Feature highlights for SEO */}
           <section className="mb-8 p-6 bg-muted/50 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">Why Choose Our Drawing Tool?</h2>
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-xl font-semibold">Why Choose Our Drawing Tool?</h2>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/features">
+                  View All Features
+                  <Layers className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div className="flex items-start gap-2">
                 <Layers className="w-5 h-5 text-primary mt-0.5" />

@@ -251,6 +251,12 @@ export default function ExportImportPage() {
                 Back to Projects
               </Link>
             </Button>
+            <span className="text-muted-foreground">•</span>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/features">
+                View All Features
+              </Link>
+            </Button>
           </nav>
           <h1 className="text-3xl font-bold">Export & Import Drawing Projects</h1>
           <p className="text-muted-foreground mt-2">
