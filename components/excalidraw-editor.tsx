@@ -199,6 +199,12 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
   // Memoize Excalidraw component to prevent infinite re-renders
   const ExcalidrawComponent = useMemo(() => (
     <Excalidraw
+    // renderCustomStats={() => (
+    //       <p style={{ color: "#70b1ec", fontWeight: "bold" }}>
+    //         Dummy stats will be shown here
+    //       </p>
+    //     )}
+      UIOptions={{canvasActions:{toggleTheme:false,}}}
       excalidrawAPI={(api) => setExcalidrawAPI(api)}
       initialData={initialData}
       theme={excalidrawTheme}
@@ -210,11 +216,6 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
       }}
       onLibraryChange={(libraryItems) => {
         handleLibraryChange(libraryItems)
-      }}
-      UIOptions={{
-        tools: {
-          image: true,
-        },
       }}
       renderTopRightUI={() => (
         <div className="flex items-center space-x-2">
