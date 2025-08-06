@@ -14,12 +14,14 @@ export const metadata: Metadata = {
     default: "Free Online Drawing Tool - Excalidraw Project Manager | Create Diagrams & Sketches",
     template: "%s | Excalidraw Project Manager"
   },
-  description: "Create beautiful diagrams, wireframes, and collaborative sketches with our free online drawing tool. Manage multiple projects, export/import, and collaborate in real-time. Perfect for designers, developers, and teams.",
+  description: "Free enhanced Excalidraw with project management for those who need organized drawing tools but can't afford premium subscriptions. Create diagrams, wireframes, and collaborative sketches with advanced project organization, export/import, and more.",
   keywords: [
     "excalidraw", "drawing tool", "diagram maker", "wireframe tool", 
     "collaborative drawing", "online sketching", "project management", 
     "free drawing app", "whiteboard", "visual collaboration", "design tool",
-    "flowchart maker", "mockup tool", "brainstorming tool"
+    "flowchart maker", "mockup tool", "brainstorming tool", "affordable design tools",
+    "free excalidraw alternative", "budget-friendly drawing app", "accessible design software",
+    "excalidraw enhanced", "organized drawing projects"
   ],
   authors: [{ name: "Satyendra", url: "https://github.com/s4tyendra" }],
   creator: "Satyendra (s4tyendra)",

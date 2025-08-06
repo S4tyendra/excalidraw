@@ -582,6 +582,32 @@ export default function ExportImportPage() {
         </CardContent>
       </Card>
       </section>
+
+      {/* Support Original Excalidraw */}
+      <section className="mt-8">
+        <Card className="bg-muted/30">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                💡 <strong>Pro Tip:</strong> This enhanced export/import feature was built for those who need organized project management but can't afford premium tools.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-sm">
+                <span className="text-muted-foreground">Love drawing tools?</span>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="https://excalidraw.com" target="_blank" rel="noopener noreferrer">
+                    Try Original Excalidraw
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="https://plus.excalidraw.com/plus" target="_blank" rel="noopener noreferrer">
+                    Support with Excalidraw Plus
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
     </div>
     </>
   )

@@ -515,6 +515,54 @@ export default function FeaturesPage() {
           </Card>
         </section>
 
+        {/* Mission Statement */}
+        <section className="my-12">
+          <Card className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800">
+            <CardHeader>
+              <CardTitle className="text-center text-xl">Why We Built This Enhanced Version</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-muted-foreground mb-6 max-w-3xl mx-auto">
+                We believe everyone deserves access to professional-grade drawing tools, regardless of budget. This enhanced version was created specifically for individuals and small teams who need organized project management but can't afford premium subscriptions.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="p-4 bg-white/50 dark:bg-black/20 rounded-lg">
+                  <h3 className="font-semibold mb-2">💝 Love the Original?</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Try the amazing free version that inspired this project
+                  </p>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="https://excalidraw.com" target="_blank" rel="noopener noreferrer">
+                      Visit Excalidraw.com
+                    </Link>
+                  </Button>
+                </div>
+                
+                <div className="p-4 bg-white/50 dark:bg-black/20 rounded-lg">
+                  <h3 className="font-semibold mb-2">🚀 Ready for Premium?</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Support the creators and get official premium features
+                  </p>
+                  <Button asChild size="sm">
+                    <Link href="https://plus.excalidraw.com/plus" target="_blank" rel="noopener noreferrer">
+                      Upgrade to Excalidraw Plus
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="text-xs text-muted-foreground italic border-t pt-4">
+                <p>
+                  This project is built with love and respect for the original Excalidraw team. 
+                  If our enhanced version helps you realize the value of organized drawing tools, 
+                  please consider supporting the official Excalidraw Plus to help sustain the ecosystem.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* FAQ Section for SEO */}
         <section className="mt-12">
           <Card>
