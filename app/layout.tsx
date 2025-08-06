@@ -61,8 +61,8 @@ export const metadata: Metadata = {
     creator: "@s4tyendra",
   },
   icons: {
-    icon: "/placeholder-logo.svg",
-    shortcut: "/placeholder-logo.svg",
+    icon: "/placeholder-logo.png",
+    shortcut: "/placeholder-logo.png",
     apple: "/placeholder-logo.png",
   },
   manifest: "/manifest.json",

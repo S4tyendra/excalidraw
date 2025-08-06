@@ -8,13 +8,13 @@
   "theme_color": "#3b82f6",
   "icons": [
     {
-      "src": "/placeholder-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/placeholder-logo.png",
+      "sizes": "768x1408",
+      "type": "image/png"
     },
     {
-      "src": "/placeholder-logo.png",
-      "sizes": "512x512",
+      "src": "/placeholder.png",
+      "sizes": "1024x1024",
       "type": "image/png"
     }
   ],
@@ -22,7 +22,7 @@
   "screenshots": [
     {
       "src": "/placeholder.png",
-      "sizes": "1280x720",
+      "sizes": "1024x1024",
       "type": "image/png",
       "form_factor": "wide"
     }
