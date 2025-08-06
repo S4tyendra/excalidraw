@@ -8,6 +8,7 @@ import { Menu, Sun, Moon, Share2 } from "lucide-react"
 import { ProjectManager, type Project } from "@/lib/project-manager"
 import { useToast } from "@/hooks/use-toast"
 import { useTheme } from "next-themes"
+import { useRouter } from "next/navigation"
 import { useDebounce } from "@/hooks/use-debounce"
 import { ProjectSidebar } from "./project-sidebar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -29,6 +30,7 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const hasInitialized = useRef(false)
   const { toast } = useToast()
+  const router = useRouter()
   const { theme, setTheme } = useTheme()
 
   // Memoize initial data to prevent unnecessary re-renders
@@ -188,8 +190,7 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
   }
 
   const handleProjectSelect = (selectedProject: Project) => {
-    window.history.pushState({}, '', `/${selectedProject.shortId}`)
-    onProjectChange(selectedProject)
+    router.push(`/${selectedProject.shortId}`)
   }
 
   const excalidrawTheme = theme === "dark" ? THEME.DARK : THEME.LIGHT

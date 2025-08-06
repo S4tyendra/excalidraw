@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Search, FileText, Plus } from "lucide-react"
 import { ProjectManager, type Project } from "@/lib/project-manager"
 import { searchProjects } from "@/lib/fuzzy-search"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 interface ProjectSidebarProps {
@@ -28,10 +29,14 @@ export function ProjectSidebar({
   const [projects, setProjects] = useState<Project[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
+  const router = useRouter()
 
+  // Refresh projects list every time the sidebar opens
   useEffect(() => {
-    const loadedProjects = ProjectManager.getAllProjects()
-    setProjects(loadedProjects)
+    if (isOpen) {
+      const loadedProjects = ProjectManager.getAllProjects()
+      setProjects(loadedProjects)
+    }
   }, [isOpen])
 
   useEffect(() => {
@@ -40,7 +45,7 @@ export function ProjectSidebar({
   }, [projects, searchQuery])
 
   const handleProjectClick = (project: Project) => {
-    onProjectSelect(project)
+    router.push(`/${project.shortId}`)
     onClose()
   }
 

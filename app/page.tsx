@@ -9,7 +9,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Plus, Edit, Trash2, FileText, Sun, Moon, Search } from "lucide-react"
 import { ProjectManager, type Project } from "@/lib/project-manager"
 import { useTheme } from "next-themes"
+import { useRouter, usePathname } from "next/navigation"
 import dynamic from "next/dynamic"
 import { searchProjects } from "@/lib/fuzzy-search"
 
@@ -30,9 +30,12 @@ export default function HomePage() {
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [newProject, setNewProject] = useState({ name: "", description: "" })
   const { theme, setTheme } = useTheme()
-    const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter()
+  const pathname = usePathname()
+  const [searchQuery, setSearchQuery] = useState("")
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
-useEffect(() => {
+
+  useEffect(() => {
     const filtered = searchProjects(projects, searchQuery)
     setFilteredProjects(filtered)
   }, [projects, searchQuery])
@@ -42,48 +45,34 @@ useEffect(() => {
     setProjects(loadedProjects)
   }, [])
 
-  // Check for hash in URL on component mount (for library URLs) and shortId in pathname
+  // Check for shortId in pathname whenever it changes
   useEffect(() => {
-    const pathname = window.location.pathname.slice(1) // Remove leading slash
+    const shortId = pathname.slice(1) // Remove leading slash
 
-    // Check for shortId in pathname
-    if (pathname) {
-      const project = ProjectManager.getProjectByShortId(pathname)
+    if (shortId) {
+      const project = ProjectManager.getProjectByShortId(shortId)
       if (project) {
         setSelectedProject(project)
-      }
-    }
-  }, [])
-
-  // Handle navigation changes (popstate for back/forward)
-  useEffect(() => {
-    const handlePopState = () => {
-      const pathname = window.location.pathname.slice(1)
-      if (pathname) {
-        const project = ProjectManager.getProjectByShortId(pathname)
-        if (project) {
-          setSelectedProject(project)
-        } else {
-          setSelectedProject(null)
-        }
       } else {
-        setSelectedProject(null)
+        // Project not found, redirect to home
+        router.push('/')
       }
+    } else {
+      setSelectedProject(null)
     }
-
-    window.addEventListener("popstate", handlePopState)
-    return () => window.removeEventListener("popstate", handlePopState)
-  }, [])
+  }, [pathname, router])
 
   const handleCreateProject = () => {
     if (!newProject.name.trim()) return
 
     const project = ProjectManager.createProject(newProject.name, newProject.description)
-    setProjects(ProjectManager.getAllProjects())
+    const updatedProjects = ProjectManager.getAllProjects()
+    setProjects(updatedProjects)
     setNewProject({ name: "", description: "" })
     setIsCreateDialogOpen(false)
-    setSelectedProject(project)
-    window.history.pushState({}, '', `/${project.shortId}`)
+    
+    // Navigate to the new project using Next.js router
+    router.push(`/${project.shortId}`)
   }
 
   const handleUpdateProject = () => {
@@ -101,21 +90,23 @@ useEffect(() => {
   const handleDeleteProject = (projectId: string) => {
     if (confirm("Are you sure you want to delete this project?")) {
       ProjectManager.deleteProject(projectId)
-      setProjects(ProjectManager.getAllProjects())
+      const updatedProjects = ProjectManager.getAllProjects()
+      setProjects(updatedProjects)
       if (selectedProject?.id === projectId) {
-        setSelectedProject(null)
-        window.history.pushState({}, '', '/')
+        router.push('/')
       }
     }
   }
 
   const handleOpenProject = (project: Project) => {
-    setSelectedProject(project)
-    window.history.pushState({}, '', `/${project.shortId}`)
+    router.push(`/${project.shortId}`)
   }
 
   const handleProjectChange = (project: Project) => {
-    setSelectedProject(project)
+    // This is called when the project data changes in the editor
+    // We might want to update the projects list if metadata changed
+    const updatedProjects = ProjectManager.getAllProjects()
+    setProjects(updatedProjects)
   }
 
   const handleNewProjectFromEditor = () => {
@@ -147,47 +138,10 @@ useEffect(() => {
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
 
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                New Project
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Project</DialogTitle>
-                <DialogDescription>Give your project a name and description to get started.</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Project Name</Label>
-                  <Input
-                    id="name"
-                    value={newProject.name}
-                    onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                    placeholder="Enter project name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={newProject.description}
-                    onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                    placeholder="Enter project description (optional)"
-                    rows={3}
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCreateProject}>Create Project</Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Project
+          </Button>
         </div>
       </div>
       <div className="p-4 border-b mb-4">
@@ -272,45 +226,6 @@ useEffect(() => {
       )}
     </div>
       )}
-
-      {/* Dialogs that should always be available */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Project</DialogTitle>
-            <DialogDescription>Update your project name and description.</DialogDescription>
-          </DialogHeader>
-          {editingProject && (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-name">Project Name</Label>
-                <Input
-                  id="edit-name"
-                  value={editingProject.name}
-                  onChange={(e) => setEditingProject({ ...editingProject, name: e.target.value })}
-                  placeholder="Enter project name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-description">Description</Label>
-                <Textarea
-                  id="edit-description"
-                  value={editingProject.description}
-                  onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
-                  placeholder="Enter project description (optional)"
-                  rows={3}
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleUpdateProject}>Update Project</Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Dialogs that should always be available */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
