@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Search, FileText, Plus } from "lucide-react"
 import { ProjectManager, type Project } from "@/lib/project-manager"
 import { searchProjects } from "@/lib/fuzzy-search"
+import Link from "next/link"
 
 interface ProjectSidebarProps {
   isOpen: boolean
@@ -46,8 +47,13 @@ export function ProjectSidebar({
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="left" className="w-80 p-0">
-        <SheetHeader className="p-4 border-b">
-          <SheetTitle>Projects</SheetTitle>
+        <SheetHeader className="p-4 border-b flex-row">
+          <Button asChild variant="ghost" onClick={onClose} className="flex">
+            <Link href="/">
+              <FileText className="w-5 h-5" />
+              <SheetTitle className="text-lg font-semibold">Projects</SheetTitle>
+            </Link>
+          </Button>
         </SheetHeader>
 
         <div className="p-4 border-b">

@@ -14,10 +14,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Edit, Trash2, FileText, Sun, Moon } from "lucide-react"
+import { Plus, Edit, Trash2, FileText, Sun, Moon, Search } from "lucide-react"
 import { ProjectManager, type Project } from "@/lib/project-manager"
 import { useTheme } from "next-themes"
 import dynamic from "next/dynamic"
+import { searchProjects } from "@/lib/fuzzy-search"
 
 const ExcalidrawEditor = dynamic(() => import("@/components/excalidraw-editor"), { ssr: false })
 
@@ -29,39 +30,49 @@ export default function HomePage() {
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [newProject, setNewProject] = useState({ name: "", description: "" })
   const { theme, setTheme } = useTheme()
+    const [searchQuery, setSearchQuery] = useState("")
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
+useEffect(() => {
+    const filtered = searchProjects(projects, searchQuery)
+    setFilteredProjects(filtered)
+  }, [projects, searchQuery])
 
   useEffect(() => {
     const loadedProjects = ProjectManager.getAllProjects()
     setProjects(loadedProjects)
   }, [])
 
-  // Check for hash in URL on component mount
+  // Check for hash in URL on component mount (for library URLs) and shortId in pathname
   useEffect(() => {
-    const hash = window.location.hash.slice(1)
-    if (hash) {
-      const project = ProjectManager.getProjectByShortId(hash)
+    const pathname = window.location.pathname.slice(1) // Remove leading slash
+
+    // Check for shortId in pathname
+    if (pathname) {
+      const project = ProjectManager.getProjectByShortId(pathname)
       if (project) {
         setSelectedProject(project)
       }
     }
   }, [])
 
-  // Handle hash changes
+  // Handle navigation changes (popstate for back/forward)
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.slice(1)
-      if (hash) {
-        const project = ProjectManager.getProjectByShortId(hash)
+    const handlePopState = () => {
+      const pathname = window.location.pathname.slice(1)
+      if (pathname) {
+        const project = ProjectManager.getProjectByShortId(pathname)
         if (project) {
           setSelectedProject(project)
+        } else {
+          setSelectedProject(null)
         }
       } else {
         setSelectedProject(null)
       }
     }
 
-    window.addEventListener("hashchange", handleHashChange)
-    return () => window.removeEventListener("hashchange", handleHashChange)
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
   }, [])
 
   const handleCreateProject = () => {
@@ -72,7 +83,7 @@ export default function HomePage() {
     setNewProject({ name: "", description: "" })
     setIsCreateDialogOpen(false)
     setSelectedProject(project)
-    window.location.hash = project.shortId
+    window.history.pushState({}, '', `/${project.shortId}`)
   }
 
   const handleUpdateProject = () => {
@@ -93,14 +104,14 @@ export default function HomePage() {
       setProjects(ProjectManager.getAllProjects())
       if (selectedProject?.id === projectId) {
         setSelectedProject(null)
-        window.location.hash = ""
+        window.history.pushState({}, '', '/')
       }
     }
   }
 
   const handleOpenProject = (project: Project) => {
     setSelectedProject(project)
-    window.location.hash = project.shortId
+    window.history.pushState({}, '', `/${project.shortId}`)
   }
 
   const handleProjectChange = (project: Project) => {
@@ -115,18 +126,16 @@ export default function HomePage() {
     setTheme(theme === "dark" ? "light" : "dark")
   }
 
-  if (selectedProject) {
-    return (
-      <ExcalidrawEditor
-        project={selectedProject}
-        onProjectChange={handleProjectChange}
-        onNewProject={handleNewProjectFromEditor}
-      />
-    )
-  }
-
   return (
-    <div className="container mx-auto p-6">
+    <>
+      {selectedProject ? (
+        <ExcalidrawEditor
+          project={selectedProject}
+          onProjectChange={handleProjectChange}
+          onNewProject={handleNewProjectFromEditor}
+        />
+      ) : (
+        <div className="container mx-auto p-6" suppressHydrationWarning>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">Excalidraw Projects</h1>
@@ -181,6 +190,17 @@ export default function HomePage() {
           </Dialog>
         </div>
       </div>
+      <div className="p-4 border-b mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground " />
+            <Input
+              placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
 
       {projects.length === 0 ? (
         <div className="text-center py-12">
@@ -192,9 +212,15 @@ export default function HomePage() {
             Create First Project
           </Button>
         </div>
+      ) : filteredProjects.length === 0 && searchQuery ? (
+        <div className="text-center py-12">
+          <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No projects found</h3>
+          <p className="text-muted-foreground mb-4">Try adjusting your search query.</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
+          {filteredProjects.map((project) => (
             <Card key={project.id} className="cursor-pointer hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -202,7 +228,7 @@ export default function HomePage() {
                     <CardTitle className="text-lg">{project.name}</CardTitle>
                     <div className="flex items-center space-x-2 mt-1">
                       <span className="px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
-                        #{project.shortId}
+                        /{project.shortId}
                       </span>
                     </div>
                     <CardDescription className="mt-2">{project.description || "No description"}</CardDescription>
@@ -244,6 +270,84 @@ export default function HomePage() {
           ))}
         </div>
       )}
+    </div>
+      )}
+
+      {/* Dialogs that should always be available */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Project</DialogTitle>
+            <DialogDescription>Update your project name and description.</DialogDescription>
+          </DialogHeader>
+          {editingProject && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-name">Project Name</Label>
+                <Input
+                  id="edit-name"
+                  value={editingProject.name}
+                  onChange={(e) => setEditingProject({ ...editingProject, name: e.target.value })}
+                  placeholder="Enter project name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editingProject.description}
+                  onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
+                  placeholder="Enter project description (optional)"
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateProject}>Update Project</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialogs that should always be available */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Project</DialogTitle>
+            <DialogDescription>Give your project a name and description to get started.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name">Project Name</Label>
+              <Input
+                id="name"
+                value={newProject.name}
+                onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                placeholder="Enter project name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={newProject.description}
+                onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                placeholder="Enter project description (optional)"
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateProject}>Create Project</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
@@ -282,6 +386,6 @@ export default function HomePage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

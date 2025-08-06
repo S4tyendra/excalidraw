@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { Excalidraw, THEME } from "@excalidraw/excalidraw"
 import "@excalidraw/excalidraw/index.css"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useTheme } from "next-themes"
 import { useDebounce } from "@/hooks/use-debounce"
 import { ProjectSidebar } from "./project-sidebar"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { tr } from "date-fns/locale"
 
 interface ExcalidrawEditorProps {
@@ -23,41 +24,139 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
   const [currentElements, setCurrentElements] = useState<any[]>([])
   const [currentAppState, setCurrentAppState] = useState<any>({})
   const [currentFiles, setCurrentFiles] = useState<any>({})
+  const [currentLibraryItems, setCurrentLibraryItems] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const hasInitialized = useRef(false)
   const { toast } = useToast()
   const { theme, setTheme } = useTheme()
 
-  // Debounce the save data to avoid too frequent saves
-  const debouncedElements = useDebounce(currentElements, 200)
-  const debouncedAppState = useDebounce(currentAppState, 200)
-  const debouncedFiles = useDebounce(currentFiles, 200)
+  // Memoize initial data to prevent unnecessary re-renders
+  const initialData = useMemo(() => ({
+    elements: project.data?.elements || [],
+    appState: {
+      viewBackgroundColor: "#fdf8f6",
+      ...project.data?.appState,
+    },
+    files: project.data?.files || {},
+    libraryItems: project.data?.libraryItems || [],
+  }), [project.id]) // Only re-create when project.id changes
 
-  // Handle Excalidraw changes
-  const handleChange = useCallback((elements: any[], appState: any, files: any) => {
-    setCurrentElements(elements)
+  // Debounce the save data to avoid too frequent saves
+  const debouncedElements = useDebounce(currentElements, 500)
+  const debouncedAppState = useDebounce(currentAppState, 500)
+  const debouncedFiles = useDebounce(currentFiles, 500)
+  const debouncedLibraryItems = useDebounce(currentLibraryItems, 500)
+
+  // Handle Excalidraw changes - use proper event handlers instead of polling
+  const handleElementsChange = useCallback((elements: readonly any[]) => {
+    if (!hasInitialized.current) return
+    setCurrentElements([...elements])
+  }, [])
+
+  const handleAppStateChange = useCallback((appState: any) => {
+    if (!hasInitialized.current) return
     setCurrentAppState(appState)
+  }, [])
+
+  const handleFilesChange = useCallback((files: any) => {
+    if (!hasInitialized.current) return
     setCurrentFiles(files)
+  }, [])
+
+  const handleLibraryChange = useCallback((libraryItems: readonly any[]) => {
+    if (!hasInitialized.current) return
+    setCurrentLibraryItems([...libraryItems])
   }, [])
 
   useEffect(() => {
     setIsLoading(false)
-  }, [])
+    hasInitialized.current = false // Reset for new project
+    
+    // Reset state when project changes
+    setCurrentElements(project.data?.elements || [])
+    setCurrentAppState(project.data?.appState || {})
+    setCurrentFiles(project.data?.files || {})
+    setCurrentLibraryItems(project.data?.libraryItems || [])
+  }, [project.id])
+
+  // Set up the excalidraw API and mark as initialized
+  useEffect(() => {
+    if (excalidrawAPI) {
+      hasInitialized.current = true
+    }
+  }, [excalidrawAPI])
+
+  // Handle library URL from hash parameters - only run once when API is ready
+  useEffect(() => {
+    const handleLibraryFromHash = async () => {
+      const hash = window.location.hash
+      const addLibraryMatch = hash.match(/[#&]addLibrary=([^&]+)/)
+      
+      if (addLibraryMatch && excalidrawAPI && hasInitialized.current) {
+        const libraryURL = decodeURIComponent(addLibraryMatch[1])
+        
+        try {
+          toast({
+            title: "Loading library...",
+            description: "Fetching library items from URL",
+          })
+
+          const libraryItems = await ProjectManager.fetchLibraryFromURL(libraryURL)
+          
+          if (libraryItems.length > 0) {
+            // Add library items to Excalidraw
+            await excalidrawAPI.updateLibrary({
+              libraryItems,
+              merge: true,
+              openLibraryMenu: true,
+              defaultStatus: "published"
+            })
+
+            toast({
+              title: "Library loaded!",
+              description: `Added ${libraryItems.length} items to your library`,
+            })
+
+            // Clean up the hash but keep the project path
+            window.history.replaceState({}, '', `/${project.shortId}`)
+          }
+        } catch (error) {
+          console.error("Error loading library:", error)
+          toast({
+            title: "Error loading library",
+            description: "Failed to load library items from the provided URL",
+            variant: "destructive",
+          })
+        }
+      }
+    }
+
+    // Only run this once when the API becomes available
+    if (excalidrawAPI && hasInitialized.current) {
+      handleLibraryFromHash()
+    }
+  }, [excalidrawAPI, hasInitialized.current, toast, project.shortId])
 
   // Auto-save when debounced data changes
   useEffect(() => {
-    if (
-      debouncedElements.length === 0 &&
-      Object.keys(debouncedAppState).length === 0 &&
-      Object.keys(debouncedFiles).length === 0
-    )
+    // Skip if we haven't initialized yet
+    if (!hasInitialized.current) {
       return
+    }
 
     try {
+      console.log('Auto-saving project data...', {
+        elements: debouncedElements.length,
+        appState: Object.keys(debouncedAppState).length,
+        files: Object.keys(debouncedFiles).length,
+        libraryItems: debouncedLibraryItems.length
+      })
+      
       ProjectManager.updateProjectData(project.id, {
         elements: debouncedElements,
         appState: {
-          viewBackgroundColor: debouncedAppState.viewBackgroundColor,
+          viewBackgroundColor: debouncedAppState.viewBackgroundColor || "#fdf8f6",
           currentItemStrokeColor: debouncedAppState.currentItemStrokeColor,
           currentItemBackgroundColor: debouncedAppState.currentItemBackgroundColor,
           currentItemFillStyle: debouncedAppState.currentItemFillStyle,
@@ -77,39 +176,74 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
           colorPalette: debouncedAppState.colorPalette,
         },
         files: debouncedFiles,
+        libraryItems: debouncedLibraryItems,
       })
     } catch (error) {
       console.error("Error auto-saving project:", error)
     }
-  }, [debouncedElements, debouncedAppState, debouncedFiles, project.id])
+  }, [debouncedElements, debouncedAppState, debouncedFiles, debouncedLibraryItems, project.id])
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark")
   }
 
   const handleProjectSelect = (selectedProject: Project) => {
-    window.location.hash = selectedProject.shortId
+    window.history.pushState({}, '', `/${selectedProject.shortId}`)
     onProjectChange(selectedProject)
   }
 
   const excalidrawTheme = theme === "dark" ? THEME.DARK : THEME.LIGHT
 
+  // Memoize Excalidraw component to prevent infinite re-renders
+  const ExcalidrawComponent = useMemo(() => (
+    <Excalidraw
+      excalidrawAPI={(api) => setExcalidrawAPI(api)}
+      initialData={initialData}
+      theme={excalidrawTheme}
+      name={project.name}
+      onChange={(elements, appState, files) => {
+        handleElementsChange(elements)
+        handleAppStateChange(appState)
+        handleFilesChange(files)
+      }}
+      onLibraryChange={(libraryItems) => {
+        handleLibraryChange(libraryItems)
+      }}
+      UIOptions={{
+        tools: {
+          image: true,
+        },
+      }}
+      renderTopRightUI={() => (
+        <div className="flex items-center space-x-2">
+          <div className="text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">Auto save!</div>
+        </div>
+      )}
+      handleKeyboardGlobally={true}
+    />
+  ), [initialData, excalidrawTheme, project.name, handleElementsChange, handleAppStateChange, handleFilesChange, handleLibraryChange])
+
   return (
-    <>
+    <TooltipProvider>
       <div className="h-screen flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b bg-background">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between px-4 py-2 border-b bg-background">
+          <div className="flex items-center space-x-3">
             <Button variant="ghost" size="sm" onClick={() => setIsSidebarOpen(true)}>
-              <Menu className="w-4 h-4" />
+              <Menu className="size-4" />
             </Button>
             <div className="flex items-center space-x-2">
-              <span className="px-2 py-1 text-xs font-mono bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
-                {project.shortId}
-              </span>
-              <div>
-                <h1 className="text-lg font-semibold">{project.name}</h1>
-                {project.description && <p className="text-sm text-muted-foreground">{project.description}</p>}
-              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="cursor-default">
+                    <h1 className="text-base font-semibold">{project.name}</h1>
+                  </div>
+                </TooltipTrigger>
+                {project.description && (
+                  <TooltipContent>
+                    <p>{project.description}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -123,31 +257,7 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
         </div>
 
         <div className="flex-1">
-          {!isLoading && (
-            <Excalidraw
-              excalidrawAPI={(api) => setExcalidrawAPI(api)}
-              initialData={{
-                elements: project.data?.elements || [],
-                appState: project.data?.appState || {viewBackgroundColor: "#a5d8ff"},
-                files: project.data?.files || {},
-              }}
-              onChange={handleChange}
-              theme={excalidrawTheme}
-              name={project.name}
-              UIOptions={{
-                tools: {
-                  image: true,
-                },
-              }}
-              renderTopRightUI={() => (
-                <div className="flex items-center space-x-2">
-                  <div className="text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">Auto save!</div>
-                </div>
-              )}
-              handleKeyboardGlobally={true}
-
-            />
-          )}
+          {!isLoading && ExcalidrawComponent}
         </div>
       </div>
 
@@ -158,6 +268,6 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
         onProjectSelect={handleProjectSelect}
         onNewProject={onNewProject}
       />
-    </>
+    </TooltipProvider>
   )
 }

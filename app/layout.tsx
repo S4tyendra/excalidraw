@@ -12,7 +12,6 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Excalidraw Editor",
   description: "A collaborative drawing editor with project management",
-  generator: "v0.dev",
 }
 
 export default function RootLayout({
