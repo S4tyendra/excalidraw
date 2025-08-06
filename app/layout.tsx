@@ -10,8 +10,8 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Excalidraw Editor",
-  description: "A collaborative drawing editor with project management",
+  title: "Excalidraw Editor | DEVH | s4tyendra | Satyendra",
+  description: "A collaborative drawing editor with project management - DEVH | s4tyendra | Satyendra",
 }
 
 export default function RootLayout({

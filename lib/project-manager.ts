@@ -159,6 +159,19 @@ export class ProjectManager {
     return project ? JSON.stringify(project, null, 2) : null
   }
 
+  static exportProjects(ids: string[]): string | null {
+    const projects = this.getAllProjects().filter(p => ids.includes(p.id))
+    if (projects.length === 0) return null
+    
+    const exportData = {
+      version: "1.0",
+      exportDate: new Date().toISOString(),
+      projects
+    }
+    
+    return JSON.stringify(exportData, null, 2)
+  }
+
   static importProject(projectData: string): Project | null {
     try {
       const project = JSON.parse(projectData) as Project
