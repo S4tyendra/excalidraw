@@ -23,7 +23,9 @@ import {
     Globe
 } from "lucide-react"
 import Link from "next/link"
-import Head from "next/head"
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 export default function FeaturesPage() {
     // SEO structured data
@@ -32,7 +34,7 @@ export default function FeaturesPage() {
         "@type": "WebPage",
         "name": "Excalidraw vs Enhanced Project Manager - Feature Comparison",
         "description": "Compare free Excalidraw with our enhanced project manager. Get advanced features like project management, cloud sync, and collaboration tools.",
-        "url": typeof window !== "undefined" ? window.location.href : "",
+        "url": "https://excalidraw.devh.in",
         "mainEntity": {
             "@type": "SoftwareApplication",
             "name": "Enhanced Excalidraw Project Manager",
@@ -193,32 +195,14 @@ export default function FeaturesPage() {
     ]
 
     return (
-        <>
-            <Head>
-                <title>Excalidraw vs Enhanced Project Manager - Feature Comparison | Free Drawing Tool</title>
-                <meta name="description" content="Compare free Excalidraw with our enhanced project manager. Get advanced features like project management, cloud sync coming soon, and collaboration tools." />
-                <meta name="keywords" content="excalidraw comparison, enhanced drawing tool, project management features, cloud sync drawing, collaborative whiteboard, drawing app features" />
-                <meta name="robots" content="index, follow" />
+        <div className="container mx-auto p-6">
+            {/* Structured Data */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+            />
 
-                {/* Open Graph */}
-                <meta property="og:title" content="Excalidraw vs Enhanced Project Manager - Feature Comparison" />
-                <meta property="og:description" content="Discover advanced features in our enhanced Excalidraw with project management, cloud sync coming soon, and collaboration tools." />
-                <meta property="og:type" content="website" />
-                <meta property="og:url" content={typeof window !== "undefined" ? window.location.href : ""} />
-
-                {/* Twitter */}
-                <meta name="twitter:title" content="Enhanced Excalidraw Features - Project Management & More" />
-                <meta name="twitter:description" content="Discover advanced features in our enhanced Excalidraw with project management and upcoming cloud sync." />
-
-                {/* Structured Data */}
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-                />
-            </Head>
-
-            <div className="container mx-auto p-6">
-                <header className="mb-8">
+            <header className="mb-8">
                     <nav className="flex items-center space-x-2 mb-4" aria-label="Breadcrumb">
                         <Button variant="ghost" size="sm" asChild>
                             <Link href="/">
@@ -613,6 +597,5 @@ export default function FeaturesPage() {
                     </Card>
                 </section>
             </div>
-        </>
     )
 }

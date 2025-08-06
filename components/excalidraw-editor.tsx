@@ -11,6 +11,7 @@ import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
 import { useDebounce } from "@/hooks/use-debounce"
 import { ProjectSidebar } from "./project-sidebar"
+import { OfflineIndicator } from "./offline-indicator"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { tr } from "date-fns/locale"
 import Link from "next/link"
@@ -92,6 +93,8 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
 
   // Handle library URL from hash parameters - only run once when API is ready
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const handleLibraryFromHash = async () => {
       const hash = window.location.hash
       const addLibraryMatch = hash.match(/[#&]addLibrary=([^&]+)/)
@@ -122,7 +125,9 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
             })
 
             // Clean up the hash but keep the project path
-            window.history.replaceState({}, '', `/${project.shortId}`)
+            if (typeof window !== 'undefined') {
+              window.history.replaceState({}, '', `/${project.shortId}`)
+            }
           }
         } catch (error) {
           console.error("Error loading library:", error)
@@ -263,6 +268,7 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
 
         <div className="flex-1">
           {!isLoading && ExcalidrawComponent}
+          <OfflineIndicator />
         </div>
       </div>
 

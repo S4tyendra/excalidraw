@@ -125,7 +125,7 @@ export default function HomePage() {
     "@type": "WebApplication",
     "name": "Excalidraw Project Manager",
     "description": "Free online collaborative drawing tool with project management. Create diagrams, wireframes, and sketches with ease.",
-    "url": typeof window !== "undefined" ? window.location.origin : "https://excalidraw.devh.in",
+    "url": "https://excalidraw.devh.in",
     "applicationCategory": "DesignApplication",
     "operatingSystem": "Web Browser",
     "offers": {
@@ -163,7 +163,7 @@ export default function HomePage() {
         <meta property="og:title" content="Free Online Drawing Tool - Excalidraw Project Manager" />
         <meta property="og:description" content="Create beautiful diagrams, wireframes, and sketches with our free online collaborative drawing tool. Manage multiple projects and collaborate in real-time." />
         <meta property="og:image" content="/placeholder-logo.png" />
-        <meta property="og:url" content={typeof window !== "undefined" ? window.location.href : ""} />
+        <meta property="og:url" content="https://excalidraw.devh.in" />
         <meta property="og:site_name" content="Excalidraw Project Manager" />
 
         {/* Twitter */}
@@ -175,7 +175,7 @@ export default function HomePage() {
 
         {/* Additional SEO */}
         <meta name="theme-color" content="#3b82f6" />
-        <link rel="canonical" href={typeof window !== "undefined" ? window.location.href : ""} />
+        <link rel="canonical" href="https://excalidraw.devh.in" />
 
         {/* Structured Data */}
         <script

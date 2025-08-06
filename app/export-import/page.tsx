@@ -1,5 +1,8 @@
 "use client"
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -202,7 +205,7 @@ export default function ExportImportPage() {
     "@type": "WebPage",
     "name": "Export Import Drawing Projects - Backup & Share",
     "description": "Backup your drawing projects or import shared diagrams. Secure JSON export/import for project management and collaboration.",
-    "url": typeof window !== "undefined" ? window.location.href : "",
+    "url": "https://excalidraw.devh.in/export-import",
     "mainEntity": {
       "@type": "SoftwareApplication",
       "name": "Project Export/Import Tool",
@@ -229,7 +232,7 @@ export default function ExportImportPage() {
         <meta property="og:title" content="Export Import Drawing Projects - Backup & Share Your Diagrams" />
         <meta property="og:description" content="Backup your drawing projects or import shared diagrams with our secure export/import tool. Perfect for team collaboration." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={typeof window !== "undefined" ? window.location.href : ""} />
+        <meta property="og:url" content="https://excalidraw.devh.in/export-import" />
         
         {/* Twitter */}
         <meta name="twitter:title" content="Export Import Drawing Projects - Backup & Share" />

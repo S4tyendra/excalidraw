@@ -6,16 +6,23 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/placeholder-logo.png",
       "sizes": "768x1408",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/placeholder.png",
       "sizes": "1024x1024",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "categories": ["productivity", "utilities", "design"],
@@ -24,7 +31,39 @@
       "src": "/placeholder.png",
       "sizes": "1024x1024",
       "type": "image/png",
-      "form_factor": "wide"
+      "form_factor": "wide",
+      "label": "Excalidraw drawing interface"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Project",
+      "short_name": "New",
+      "description": "Create a new drawing project",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/placeholder-logo.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Export/Import",
+      "short_name": "Export",
+      "description": "Export or import drawings",
+      "url": "/export-import",
+      "icons": [
+        {
+          "src": "/placeholder-logo.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "features": [
+    "offline",
+    "persistent-storage",
+    "cross-origin-isolated"
   ]
 }
