@@ -19,6 +19,7 @@ import { useTheme } from "next-themes"
 import { useRouter, usePathname } from "next/navigation"
 import dynamic from "next/dynamic"
 import { searchProjects } from "@/lib/fuzzy-search"
+import Link from "next/link"
 
 const ExcalidrawEditor = dynamic(() => import("@/components/excalidraw-editor"), { ssr: false })
 
@@ -141,6 +142,13 @@ export default function HomePage() {
           <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             New Project
+          </Button>
+
+          <Button asChild variant="outline" size="sm">
+            <Link href="/export-import">
+              <Plus className="w-4 h-4 mr-2" />
+              Export/Import
+            </Link>
           </Button>
         </div>
       </div>
