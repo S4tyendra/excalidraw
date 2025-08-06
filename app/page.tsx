@@ -405,42 +405,6 @@ export default function HomePage() {
           )}
         </DialogContent>
       </Dialog>
-  <footer className="fixed bottom-0 items-left left-0 right-0 m-12 text-left text-sm text-muted-foreground">
-        <section className="mb-8 p-6 bg-muted/50 rounded-lg">
-          <div className="flex justify-between items-start mb-4">
-            <h2 className="text-xl font-semibold">Excalidraw - DevH</h2>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/features">
-                View All Features
-                <Layers className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="flex items-start gap-2">
-              <Layers className="w-5 h-5 text-primary mt-0.5" />
-              <div>
-                <h3 className="font-medium">Project Management</h3>
-                <p className="text-muted-foreground">Organize and manage multiple drawing projects efficiently</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <Share2 className="w-5 h-5 text-primary mt-0.5" />
-              <div>
-                <h3 className="font-medium">Export & Import</h3>
-                <p className="text-muted-foreground">Backup and share your projects with JSON export/import</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <Search className="w-5 h-5 text-primary mt-0.5" />
-              <div>
-                <h3 className="font-medium">Smart Search</h3>
-                <p className="text-muted-foreground">Find your projects quickly with intelligent search</p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </footer>
     </>
   )
 }
