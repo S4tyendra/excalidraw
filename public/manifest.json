@@ -1,0 +1,30 @@
+{
+  "name": "Excalidraw Project Manager",
+  "short_name": "Excalidraw PM",
+  "description": "Free online collaborative drawing tool with project management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "/placeholder-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/placeholder-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "utilities", "design"],
+  "screenshots": [
+    {
+      "src": "/placeholder.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}

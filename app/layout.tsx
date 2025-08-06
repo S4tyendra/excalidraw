@@ -10,8 +10,61 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Excalidraw Editor | DEVH | s4tyendra | Satyendra",
-  description: "A collaborative drawing editor with project management - DEVH | s4tyendra | Satyendra",
+  title: {
+    default: "Free Online Drawing Tool - Excalidraw Project Manager | Create Diagrams & Sketches",
+    template: "%s | Excalidraw Project Manager"
+  },
+  description: "Create beautiful diagrams, wireframes, and collaborative sketches with our free online drawing tool. Manage multiple projects, export/import, and collaborate in real-time. Perfect for designers, developers, and teams.",
+  keywords: [
+    "excalidraw", "drawing tool", "diagram maker", "wireframe tool", 
+    "collaborative drawing", "online sketching", "project management", 
+    "free drawing app", "whiteboard", "visual collaboration", "design tool",
+    "flowchart maker", "mockup tool", "brainstorming tool"
+  ],
+  authors: [{ name: "Satyendra", url: "https://github.com/s4tyendra" }],
+  creator: "Satyendra (s4tyendra)",
+  publisher: "DEVH",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://excalidraw.devh.in",
+    siteName: "Excalidraw Project Manager",
+    title: "Free Online Drawing Tool - Create Diagrams & Sketches",
+    description: "Create beautiful diagrams, wireframes, and collaborative sketches with our free online drawing tool. Perfect for teams and individuals.",
+    images: [
+      {
+        url: "/placeholder-logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Excalidraw Project Manager - Free Online Drawing Tool",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Free Online Drawing Tool - Excalidraw Project Manager",
+    description: "Create beautiful diagrams, wireframes, and collaborative sketches with our free online drawing tool.",
+    images: ["/placeholder-logo.png"],
+    creator: "@s4tyendra",
+  },
+  icons: {
+    icon: "/placeholder-logo.svg",
+    shortcut: "/placeholder-logo.svg",
+    apple: "/placeholder-logo.png",
+  },
+  manifest: "/manifest.json",
+  category: "productivity",
 }
 
 export default function RootLayout({

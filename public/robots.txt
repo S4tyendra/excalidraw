@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://excalidraw.devh.in/sitemap.xml
+
+# Crawl delay (optional, helps with server load)
+Crawl-delay: 1

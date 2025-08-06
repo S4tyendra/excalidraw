@@ -13,6 +13,7 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { ProjectSidebar } from "./project-sidebar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { tr } from "date-fns/locale"
+import Link from "next/link"
 
 interface ExcalidrawEditorProps {
   project: Project
@@ -251,8 +252,10 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
             <Button variant="outline" size="sm" onClick={toggleTheme}>
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            <Button variant="outline" size="sm" disabled title="Share functionality coming soon">
-              <Share2 className="w-4 h-4" />
+            <Button asChild variant="outline" size="sm" title="Share functionality coming soon">
+              <Link href="/export-import">
+                <Share2 className="w-4 h-4" />
+              </Link>
             </Button>
           </div>
         </div>

@@ -13,13 +13,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Edit, Trash2, FileText, Sun, Moon, Search } from "lucide-react"
+import { Plus, Edit, Trash2, FileText, Sun, Moon, Search, Palette, Share2, Layers } from "lucide-react"
 import { ProjectManager, type Project } from "@/lib/project-manager"
 import { useTheme } from "next-themes"
 import { useRouter, usePathname } from "next/navigation"
 import dynamic from "next/dynamic"
 import { searchProjects } from "@/lib/fuzzy-search"
 import Link from "next/link"
+import Head from "next/head"
 
 const ExcalidrawEditor = dynamic(() => import("@/components/excalidraw-editor"), { ssr: false })
 
@@ -118,8 +119,70 @@ export default function HomePage() {
     setTheme(theme === "dark" ? "light" : "dark")
   }
 
+  // SEO structured data
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Excalidraw Project Manager",
+    "description": "Free online collaborative drawing tool with project management. Create diagrams, wireframes, and sketches with ease.",
+    "url": typeof window !== "undefined" ? window.location.origin : "https://excalidraw.devh.in",
+    "applicationCategory": "DesignApplication",
+    "operatingSystem": "Web Browser",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "creator": {
+      "@type": "Person",
+      "name": "Satyendra",
+      "alternateName": "s4tyendra"
+    },
+    "featureList": [
+      "Collaborative drawing and diagramming",
+      "Project management and organization",
+      "Export and import functionality",
+      "Real-time collaboration",
+      "Dark and light themes",
+      "Search and filter projects"
+    ]
+  }
+
   return (
     <>
+      <Head>
+        <title>Free Online Drawing Tool - Excalidraw Project Manager | Create Diagrams & Sketches</title>
+        <meta name="description" content="Create beautiful diagrams, wireframes, and sketches with our free online collaborative drawing tool. Manage multiple projects, export/import, and collaborate in real-time." />
+        <meta name="keywords" content="excalidraw, drawing tool, diagram maker, wireframe tool, collaborative drawing, online sketching, project management, free drawing app, whiteboard, visual collaboration" />
+        <meta name="author" content="Satyendra (s4tyendra)" />
+        <meta name="robots" content="index, follow" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Free Online Drawing Tool - Excalidraw Project Manager" />
+        <meta property="og:description" content="Create beautiful diagrams, wireframes, and sketches with our free online collaborative drawing tool. Manage multiple projects and collaborate in real-time." />
+        <meta property="og:image" content="/placeholder-logo.png" />
+        <meta property="og:url" content={typeof window !== "undefined" ? window.location.href : ""} />
+        <meta property="og:site_name" content="Excalidraw Project Manager" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Free Online Drawing Tool - Excalidraw Project Manager" />
+        <meta name="twitter:description" content="Create beautiful diagrams, wireframes, and sketches with our free online collaborative drawing tool." />
+        <meta name="twitter:image" content="/placeholder-logo.png" />
+        <meta name="twitter:creator" content="@s4tyendra" />
+        
+        {/* Additional SEO */}
+        <meta name="theme-color" content="#3b82f6" />
+        <link rel="canonical" href={typeof window !== "undefined" ? window.location.href : ""} />
+        
+        {/* Structured Data */}
+        <script 
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      </Head>
       {selectedProject ? (
         <ExcalidrawEditor
           project={selectedProject}
@@ -128,110 +191,164 @@ export default function HomePage() {
         />
       ) : (
         <div className="container mx-auto p-6" suppressHydrationWarning>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Excalidraw Projects</h1>
-          <p className="text-muted-foreground mt-2">Create and manage your drawing projects</p>
-        </div>
+          <header className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold">Free Online Drawing Tool - Excalidraw Project Manager</h1>
+              <p className="text-muted-foreground mt-2">
+                Create beautiful diagrams, wireframes, and collaborative sketches. Manage multiple drawing projects with ease.
+              </p>
+              {/* SEO-optimized subtitle */}
+              <div className="mt-4 text-sm text-muted-foreground">
+                <p className="flex items-center gap-2">
+                  <Palette className="w-4 h-4" />
+                  Professional diagramming tool for designers, developers, and teams
+                </p>
+              </div>
+            </div>
 
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={toggleTheme}>
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </Button>
+            <nav className="flex items-center space-x-2" aria-label="Main navigation">
+              <Button variant="outline" size="sm" onClick={toggleTheme} aria-label="Toggle theme">
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
 
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Project
-          </Button>
+              <Button onClick={() => setIsCreateDialogOpen(true)} aria-label="Create new project">
+                <Plus className="w-4 h-4 mr-2" />
+                New Project
+              </Button>
 
-          <Button asChild variant="outline" size="sm">
-            <Link href="/export-import">
-              <Plus className="w-4 h-4 mr-2" />
-              Export/Import
-            </Link>
-          </Button>
-        </div>
-      </div>
-      <div className="p-4 border-b mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground " />
-            <Input
-              placeholder="Search projects..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/export-import" aria-label="Export and import projects">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Export/Import
+                </Link>
+              </Button>
+            </nav>
+          </header>
 
-      {projects.length === 0 ? (
-        <div className="text-center py-12">
-          <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
-          <p className="text-muted-foreground mb-4">Create your first drawing project to get started.</p>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create First Project
-          </Button>
-        </div>
-      ) : filteredProjects.length === 0 && searchQuery ? (
-        <div className="text-center py-12">
-          <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No projects found</h3>
-          <p className="text-muted-foreground mb-4">Try adjusting your search query.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
-            <Card key={project.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1" onClick={() => handleOpenProject(project)}>
-                    <CardTitle className="text-lg">{project.name}</CardTitle>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className="px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
-                        /{project.shortId}
-                      </span>
-                    </div>
-                    <CardDescription className="mt-2">{project.description || "No description"}</CardDescription>
-                  </div>
-                  <div className="flex space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setEditingProject(project)
-                        setIsEditDialogOpen(true)
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeleteProject(project.id)
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+          {/* Feature highlights for SEO */}
+          <section className="mb-8 p-6 bg-muted/50 rounded-lg">
+            <h2 className="text-xl font-semibold mb-4">Why Choose Our Drawing Tool?</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="flex items-start gap-2">
+                <Layers className="w-5 h-5 text-primary mt-0.5" />
+                <div>
+                  <h3 className="font-medium">Project Management</h3>
+                  <p className="text-muted-foreground">Organize and manage multiple drawing projects efficiently</p>
                 </div>
-              </CardHeader>
-              <CardContent onClick={() => handleOpenProject(project)}>
-                <div className="text-sm text-muted-foreground">
-                  Created: {new Date(project.createdAt).toLocaleDateString()}
+              </div>
+              <div className="flex items-start gap-2">
+                <Share2 className="w-5 h-5 text-primary mt-0.5" />
+                <div>
+                  <h3 className="font-medium">Export & Import</h3>
+                  <p className="text-muted-foreground">Backup and share your projects with JSON export/import</p>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Modified: {new Date(project.updatedAt).toLocaleDateString()}
+              </div>
+              <div className="flex items-start gap-2">
+                <Search className="w-5 h-5 text-primary mt-0.5" />
+                <div>
+                  <h3 className="font-medium">Smart Search</h3>
+                  <p className="text-muted-foreground">Find your projects quickly with intelligent search</p>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              </div>
+            </div>
+          </section>
+
+          <section aria-label="Project search">
+            <div className="p-4 border-b mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search your drawing projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                  aria-label="Search projects"
+                />
+              </div>
+            </div>
+          </section>
+
+          <main>
+            {projects.length === 0 ? (
+              <section className="text-center py-12" aria-label="No projects state">
+                <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <h2 className="text-lg font-semibold mb-2">Start Your First Drawing Project</h2>
+                <p className="text-muted-foreground mb-4">
+                  Create professional diagrams, wireframes, and collaborative sketches. Perfect for UI/UX design, system architecture, and visual brainstorming.
+                </p>
+                <Button onClick={() => setIsCreateDialogOpen(true)} size="lg">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Your First Project
+                </Button>
+              </section>
+            ) : filteredProjects.length === 0 && searchQuery ? (
+              <section className="text-center py-12" aria-label="No search results">
+                <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <h2 className="text-lg font-semibold mb-2">No Projects Found</h2>
+                <p className="text-muted-foreground mb-4">
+                  Try adjusting your search query or create a new project with that name.
+                </p>
+              </section>
+            ) : (
+              <section aria-label="Project list">
+                <h2 className="sr-only">Your Drawing Projects</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="list">
+                  {filteredProjects.map((project) => (
+                    <article key={project.id} className="cursor-pointer hover:shadow-lg transition-shadow" role="listitem">
+                      <Card>
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1" onClick={() => handleOpenProject(project)}>
+                              <CardTitle className="text-lg">{project.name}</CardTitle>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
+                                  /{project.shortId}
+                                </span>
+                              </div>
+                              <CardDescription className="mt-2">{project.description || "No description"}</CardDescription>
+                            </div>
+                            <div className="flex space-x-1" role="group" aria-label="Project actions">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setEditingProject(project)
+                                  setIsEditDialogOpen(true)
+                                }}
+                                aria-label={`Edit project ${project.name}`}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteProject(project.id)
+                                }}
+                                aria-label={`Delete project ${project.name}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent onClick={() => handleOpenProject(project)}>
+                          <div className="text-sm text-muted-foreground">
+                            Created: <time dateTime={project.createdAt}>{new Date(project.createdAt).toLocaleDateString()}</time>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Modified: <time dateTime={project.updatedAt}>{new Date(project.updatedAt).toLocaleDateString()}</time>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+          </main>
     </div>
       )}
 

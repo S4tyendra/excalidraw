@@ -17,11 +17,14 @@ import {
   ArrowLeft, 
   AlertCircle,
   Copy,
-  Package
+  Package,
+  Database,
+  Shield
 } from "lucide-react"
 import { ProjectManager, type Project } from "@/lib/project-manager"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import Head from "next/head"
 
 export default function ExportImportPage() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -193,26 +196,88 @@ export default function ExportImportPage() {
   const isAllSelected = projects.length > 0 && selectedProjects.size === projects.length
   const isSomeSelected = selectedProjects.size > 0 && selectedProjects.size < projects.length
 
+  // SEO structured data for export/import functionality
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Export Import Drawing Projects - Backup & Share",
+    "description": "Backup your drawing projects or import shared diagrams. Secure JSON export/import for project management and collaboration.",
+    "url": typeof window !== "undefined" ? window.location.href : "",
+    "mainEntity": {
+      "@type": "SoftwareApplication",
+      "name": "Project Export/Import Tool",
+      "applicationCategory": "UtilityApplication",
+      "featureList": [
+        "Bulk project export",
+        "Individual project backup",
+        "JSON import from files",
+        "Secure data transfer",
+        "Project sharing capabilities"
+      ]
+    }
+  }
+
   return (
+    <>
+      <Head>
+        <title>Export Import Drawing Projects - Backup & Share Your Diagrams | Excalidraw Project Manager</title>
+        <meta name="description" content="Backup your drawing projects or import shared diagrams with our secure export/import tool. Perfect for team collaboration and project management." />
+        <meta name="keywords" content="export drawing projects, import diagrams, backup drawings, share excalidraw, project backup, diagram export, collaborative drawing" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="Export Import Drawing Projects - Backup & Share Your Diagrams" />
+        <meta property="og:description" content="Backup your drawing projects or import shared diagrams with our secure export/import tool. Perfect for team collaboration." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={typeof window !== "undefined" ? window.location.href : ""} />
+        
+        {/* Twitter */}
+        <meta name="twitter:title" content="Export Import Drawing Projects - Backup & Share" />
+        <meta name="twitter:description" content="Backup your drawing projects or import shared diagrams with our secure export/import tool." />
+        
+        {/* Structured Data */}
+        <script 
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      </Head>
     <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between mb-8">
         <div>
-          <div className="flex items-center space-x-2 mb-2">
+          <nav className="flex items-center space-x-2 mb-2" aria-label="Breadcrumb">
             <Button variant="ghost" size="sm" asChild>
               <Link href="/">
                 <ArrowLeft className="w-4 h-4" />
                 Back to Projects
               </Link>
             </Button>
-          </div>
-          <h1 className="text-3xl font-bold">Export & Import Projects</h1>
+          </nav>
+          <h1 className="text-3xl font-bold">Export & Import Drawing Projects</h1>
           <p className="text-muted-foreground mt-2">
-            Backup your projects or import from other sources
+            Backup your drawing projects, share with team members, or import from other sources
           </p>
+          
+          {/* SEO benefit highlights */}
+          <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Database className="w-4 h-4" />
+              Secure JSON backup
+            </span>
+            <span className="flex items-center gap-1">
+              <Shield className="w-4 h-4" />
+              Privacy-first export
+            </span>
+            <span className="flex items-center gap-1">
+              <Package className="w-4 h-4" />
+              Bulk operations
+            </span>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <section aria-label="Export and import tools">
+        <h2 className="sr-only">Project Export and Import Tools</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Export Section */}
         <Card>
           <CardHeader>
@@ -397,20 +462,25 @@ export default function ExportImportPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </section>
 
       {/* Export Format Documentation */}
-      <Card className="mt-8">
+      <section aria-label="Documentation">
+        <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Export Format</CardTitle>
+          <CardTitle>Export Format Guide - JSON Structure for Drawing Projects</CardTitle>
           <CardDescription>
-            Understanding the JSON structure for imports and exports
+            Learn about our JSON export format for backing up and sharing your drawing projects securely
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
-              <h4 className="font-medium mb-2">Bulk Export Format:</h4>
+              <h3 className="font-medium mb-3 text-lg">Bulk Export Format for Multiple Projects:</h3>
+              <p className="text-sm text-muted-foreground mb-2">
+                When exporting multiple projects, they are packaged in a structured JSON format with metadata for easy restoration.
+              </p>
               <div className="relative">
                 <pre className="text-sm bg-muted p-4 rounded-lg overflow-x-auto">
 {`{
@@ -449,7 +519,10 @@ export default function ExportImportPage() {
             </div>
 
             <div>
-              <h4 className="font-medium mb-2">Single Project Format:</h4>
+              <h3 className="font-medium mb-3 text-lg">Single Project Export Format:</h3>
+              <p className="text-sm text-muted-foreground mb-2">
+                Individual projects are exported with complete drawing data, metadata, and timestamps for full restoration.
+              </p>
               <div className="relative">
                 <pre className="text-sm bg-muted p-4 rounded-lg overflow-x-auto">
 {`{
@@ -485,12 +558,25 @@ export default function ExportImportPage() {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Note:</strong> When importing, new IDs and shortIds will be generated automatically to prevent conflicts with existing projects.
+                <strong>Privacy & Security:</strong> All exports are processed locally in your browser. No data is sent to external servers. When importing, new unique IDs are generated automatically to prevent conflicts with existing projects.
               </AlertDescription>
             </Alert>
+            
+            <div className="border-t pt-4">
+              <h3 className="font-medium mb-2">Why Use Our Export/Import Feature?</h3>
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Backup your valuable drawing projects securely</li>
+                <li>Share project files with team members</li>
+                <li>Migrate projects between different instances</li>
+                <li>Version control for your diagrams and sketches</li>
+                <li>Collaborate on complex drawing projects</li>
+              </ul>
+            </div>
           </div>
         </CardContent>
       </Card>
+      </section>
     </div>
+    </>
   )
 }
