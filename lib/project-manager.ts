@@ -1,4 +1,4 @@
-"use client";
+;
 export interface Project {
   id: string
   shortId: string // This will serve as both shortId and slug

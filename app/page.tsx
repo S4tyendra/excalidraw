@@ -1,4 +1,3 @@
-"use client"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -23,16 +22,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ProjectManager, type Project } from "@/lib/project-manager"
 import { useTheme } from "next-themes"
-import { useRouter, usePathname } from "next/navigation"
-import dynamic from "next/dynamic"
+import {  useNavigate, useLocation  } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { searchProjects } from "@/lib/fuzzy-search"
-import Link from "next/link"
-import Head from "next/head"
+import {  Link  } from 'react-router-dom'
+
 import Signin from "@/components/signin"
 
 import { CloudSync } from "@/lib/cloud-sync"
 
-const ExcalidrawEditor = dynamic(() => import("@/components/excalidraw-editor"), { ssr: false })
+const ExcalidrawEditorLoader = lazy(() => import("@/components/excalidraw-editor")); const ExcalidrawEditor = (props: any) => <Suspense fallback={<div/>}><ExcalidrawEditorLoader {...props} /></Suspense>
 
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -42,8 +41,8 @@ export default function HomePage() {
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [newProject, setNewProject] = useState({ name: "", description: "" })
   const { theme, setTheme } = useTheme()
-  const router = useRouter()
-  const pathname = usePathname()
+  const router = useNavigate()
+  const pathname = useLocation().pathname
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
 
@@ -68,7 +67,7 @@ export default function HomePage() {
         setSelectedProject(project)
       } else {
         // Project not found, redirect to home
-        router.push('/')
+        navigate('/')
       }
     } else {
       setSelectedProject(null)
@@ -88,7 +87,7 @@ export default function HomePage() {
       CloudSync.uploadProject(project).catch(console.error)
     }
 
-    router.push(`/${project.shortId}`)
+    navigate(`/${project.shortId}`)
   }
 
   const handleUpdateProject = () => {
@@ -114,7 +113,7 @@ export default function HomePage() {
       ProjectManager.deleteProject(projectId)
       setProjects(ProjectManager.getAllProjects())
       if (selectedProject?.id === projectId) {
-        router.push('/')
+        navigate('/')
       }
       // Fire-and-forget: delete from server if logged in
       if (CloudSync.getSession()) {
@@ -124,7 +123,7 @@ export default function HomePage() {
   }
 
   const handleOpenProject = (project: Project) => {
-    router.push(`/${project.shortId}`)
+    navigate(`/${project.shortId}`)
   }
 
   const handleProjectChange = (project: Project) => {
@@ -173,39 +172,7 @@ export default function HomePage() {
 
   return (
     <>
-      <Head>
-        <title>Free Online Drawing Tool - Excalidraw Project Manager | Create Diagrams & Sketches</title>
-        <meta name="description" content="Create beautiful diagrams, wireframes, and sketches with our free online collaborative drawing tool. Manage multiple projects, export/import, and collaborate in real-time." />
-        <meta name="keywords" content="excalidraw, drawing tool, diagram maker, wireframe tool, collaborative drawing, online sketching, project management, free drawing app, whiteboard, visual collaboration" />
-        <meta name="author" content="Satyendra (s4tyendra)" />
-        <meta name="robots" content="index, follow" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-        {/* Open Graph / Facebook */}
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="Free Online Drawing Tool - Excalidraw Project Manager" />
-        <meta property="og:description" content="Create beautiful diagrams, wireframes, and sketches with our free online collaborative drawing tool. Manage multiple projects and collaborate in real-time." />
-        <meta property="og:image" content="/placeholder-logo.png" />
-        <meta property="og:url" content="https://excalidraw.devh.in" />
-        <meta property="og:site_name" content="Excalidraw Project Manager" />
-
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Free Online Drawing Tool - Excalidraw Project Manager" />
-        <meta name="twitter:description" content="Create beautiful diagrams, wireframes, and sketches with our free online collaborative drawing tool." />
-        <meta name="twitter:image" content="/placeholder-logo.png" />
-        <meta name="twitter:creator" content="@s4tyendra" />
-
-        {/* Additional SEO */}
-        <meta name="theme-color" content="#3b82f6" />
-        <link rel="canonical" href="https://excalidraw.devh.in" />
-
-        {/* Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-      </Head>
+      <></>
       {selectedProject ? (
         <ExcalidrawEditor
           project={selectedProject}
@@ -363,9 +330,9 @@ export default function HomePage() {
           <footer className="mt-16 pt-8 border-t text-sm text-muted-foreground flex flex-col md:flex-row items-center justify-between gap-4">
             <p>&copy; {new Date().getFullYear()} Satyendra. All rights reserved.</p>
             <div className="flex items-center space-x-4">
-              <Link href="/privacy" className="hover:underline">Privacy</Link>
-              <Link href="/terms" className="hover:underline">Terms</Link>
-              <Link href="/contact" className="hover:underline">Contact</Link>
+              <Link to="/privacy" className="hover:underline">Privacy</Link>
+              <Link to="/terms" className="hover:underline">Terms</Link>
+              <Link to="/contact" className="hover:underline">Contact</Link>
             </div>
           </footer>
         </div>

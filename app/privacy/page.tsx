@@ -1,15 +1,14 @@
-"use client"
 
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
+import {  Link  } from 'react-router-dom'
 
 export default function PrivacyPage() {
   return (
     <div className="container mx-auto p-6 max-w-3xl">
       <nav className="mb-8">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/">
+          <Link to="/">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Link>

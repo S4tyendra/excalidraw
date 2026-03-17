@@ -1,14 +1,13 @@
-"use client"
 
 import { useEffect, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import {  useNavigate, useSearchParams  } from 'react-router-dom'
 import { Button } from "@/components/ui/button"
 import { ProjectManager, Project } from "@/lib/project-manager"
 import { CloudSync } from "@/lib/cloud-sync"
 import { ArrowRightLeft, Loader2, Database, UploadCloud } from "lucide-react"
 
 export default function CallbackPage() {
-  const router = useRouter()
+  const router = useNavigate()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
 
@@ -22,7 +21,7 @@ export default function CallbackPage() {
       localStorage.setItem("session_id", token)
       checkSyncStatus()
     } else {
-      router.push("/")
+      navigate("/")
     }
   }, [token])
 
@@ -47,11 +46,11 @@ export default function CallbackPage() {
       if (newServer || newLocal || outdatedLocalFromServer || outdatedServerFromLocal) {
         setNeedsSync(true)
       } else {
-        router.push("/")
+        navigate("/")
       }
     } catch (e) {
       console.error(e)
-      router.push("/")
+      navigate("/")
     } finally {
       setLoading(false)
     }
@@ -127,7 +126,7 @@ export default function CallbackPage() {
       }
 
       localStorage.setItem("excalidraw-projects", JSON.stringify(refreshedLocals))
-      router.push("/")
+      navigate("/")
     } catch (e) {
       console.error(e)
       setSyncing(false)
@@ -135,7 +134,7 @@ export default function CallbackPage() {
   }
 
   const handleSkip = () => {
-    router.push("/")
+    navigate("/")
   }
 
   if (loading) {

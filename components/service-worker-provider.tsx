@@ -1,4 +1,3 @@
-"use client"
 
 import { useEffect } from "react"
 import { registerServiceWorker } from "@/lib/service-worker"
@@ -17,8 +16,7 @@ export function ServiceWorkerProvider({ children }: ServiceWorkerProviderProps) 
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return
 
     // Only register service worker in production or when explicitly enabled
-    const shouldRegisterSW = process.env.NODE_ENV === 'production' || 
-                             process.env.NEXT_PUBLIC_ENABLE_SW === 'true'
+    const shouldRegisterSW = !import.meta.env.DEV
 
     if (!shouldRegisterSW) {
       console.log('[SW] Service Worker registration skipped in development')

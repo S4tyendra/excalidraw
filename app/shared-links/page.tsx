@@ -1,11 +1,10 @@
-"use client"
 
 import { useEffect, useState } from "react"
 import { ShareDB, SharedLink } from "@/lib/share-db"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Copy, ExternalLink, Trash2, Link2, ArrowLeft, CheckCircle2 } from "lucide-react"
-import Link from "next/link"
+import {  Link  } from 'react-router-dom'
 
 export default function SharedLinksPage() {
   const [links, setLinks] = useState<SharedLink[]>([])
@@ -32,7 +31,7 @@ export default function SharedLinksPage() {
     <div className="container mx-auto p-6 max-w-3xl">
       <div className="flex items-center gap-3 mb-8">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/">
+          <Link to="/">
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
           </Link>

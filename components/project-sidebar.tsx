@@ -1,4 +1,3 @@
-"use client"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -8,8 +7,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Search, FileText, Plus } from "lucide-react"
 import { ProjectManager, type Project } from "@/lib/project-manager"
 import { searchProjects } from "@/lib/fuzzy-search"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
+import {  useNavigate  } from 'react-router-dom'
+import {  Link  } from 'react-router-dom'
 
 interface ProjectSidebarProps {
   isOpen: boolean
@@ -29,7 +28,7 @@ export function ProjectSidebar({
   const [projects, setProjects] = useState<Project[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
-  const router = useRouter()
+  const router = useNavigate()
 
   // Refresh projects list every time the sidebar opens
   useEffect(() => {
@@ -45,7 +44,7 @@ export function ProjectSidebar({
   }, [projects, searchQuery])
 
   const handleProjectClick = (project: Project) => {
-    router.push(`/${project.shortId}`)
+    navigate(`/${project.shortId}`)
     onClose()
   }
 
@@ -54,7 +53,7 @@ export function ProjectSidebar({
       <SheetContent side="left" className="w-80 p-0">
         <SheetHeader className="p-4 border-b flex-row">
           <Button asChild variant="ghost" onClick={onClose} className="flex">
-            <Link href="/">
+            <Link to="/">
               <FileText className="w-5 h-5" />
               <SheetTitle className="text-lg font-semibold">Projects</SheetTitle>
             </Link>

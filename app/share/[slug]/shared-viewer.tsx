@@ -1,4 +1,3 @@
-"use client"
 
 import { useEffect, useState, useMemo } from "react"
 import { Excalidraw, THEME } from "@excalidraw/excalidraw"
@@ -8,15 +7,15 @@ import { CloudSync } from "@/lib/cloud-sync"
 import { ProjectManager } from "@/lib/project-manager"
 import { ArrowLeft, Loader2, GitFork, Sun, Moon, Link2 } from "lucide-react"
 import { useTheme } from "next-themes"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
+import {  useNavigate  } from 'react-router-dom'
+import {  Link  } from 'react-router-dom'
 
 export default function SharedViewer({ slug }: { slug: string }) {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const { theme, setTheme } = useTheme()
-  const router = useRouter()
+  const router = useNavigate()
 
   useEffect(() => {
     CloudSync.fetchSharedProject(slug)
@@ -44,7 +43,7 @@ export default function SharedViewer({ slug }: { slug: string }) {
       files: data.files || {},
       libraryItems: data.libraryItems || []
     })
-    router.push(`/${project.shortId}`)
+    navigate(`/${project.shortId}`)
   }
 
   const excalidrawTheme = theme === "dark" ? THEME.DARK : THEME.LIGHT
@@ -76,7 +75,7 @@ export default function SharedViewer({ slug }: { slug: string }) {
         <h1 className="text-2xl font-bold">Project Not Found</h1>
         <p className="text-muted-foreground">The shared link is invalid or has expired.</p>
         <Button asChild>
-          <Link href="/">Back to Home</Link>
+          <Link to="/">Back to Home</Link>
         </Button>
       </div>
     )
@@ -87,7 +86,7 @@ export default function SharedViewer({ slug }: { slug: string }) {
       <div className="flex items-center justify-between px-4 py-2 border-b bg-background shadow-sm z-50">
         <div className="flex items-center space-x-3">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/">
+            <Link to="/">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Home
             </Link>

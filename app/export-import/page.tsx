@@ -1,8 +1,4 @@
-"use client"
-
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
-
+// Force dynamic rendering (Removed)
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,9 +21,9 @@ import {
   Shield
 } from "lucide-react"
 import { ProjectManager, type Project } from "@/lib/project-manager"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import Head from "next/head"
+import {  Link  } from 'react-router-dom'
+import {  useNavigate  } from 'react-router-dom'
+
 
 export default function ExportImportPage() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -39,7 +35,7 @@ export default function ExportImportPage() {
   }>({ success: [], errors: [] })
   const [showImportResults, setShowImportResults] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
-  const router = useRouter()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const loadedProjects = ProjectManager.getAllProjects()
@@ -222,41 +218,20 @@ export default function ExportImportPage() {
 
   return (
     <>
-      <Head>
-        <title>Export Import Drawing Projects - Backup & Share Your Diagrams | Excalidraw Project Manager</title>
-        <meta name="description" content="Backup your drawing projects or import shared diagrams with our secure export/import tool. Perfect for team collaboration and project management." />
-        <meta name="keywords" content="export drawing projects, import diagrams, backup drawings, share excalidraw, project backup, diagram export, collaborative drawing" />
-        <meta name="robots" content="index, follow" />
-        
-        {/* Open Graph */}
-        <meta property="og:title" content="Export Import Drawing Projects - Backup & Share Your Diagrams" />
-        <meta property="og:description" content="Backup your drawing projects or import shared diagrams with our secure export/import tool. Perfect for team collaboration." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://excalidraw.devh.in/export-import" />
-        
-        {/* Twitter */}
-        <meta name="twitter:title" content="Export Import Drawing Projects - Backup & Share" />
-        <meta name="twitter:description" content="Backup your drawing projects or import shared diagrams with our secure export/import tool." />
-        
-        {/* Structured Data */}
-        <script 
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-      </Head>
+      <></>
     <div className="container mx-auto p-6">
       <header className="flex items-center justify-between mb-8">
         <div>
           <nav className="flex items-center space-x-2 mb-2" aria-label="Breadcrumb">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/">
+              <Link to="/">
                 <ArrowLeft className="w-4 h-4" />
                 Back to Projects
               </Link>
             </Button>
             <span className="text-muted-foreground">•</span>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/features">
+              <Link to="/features">
                 View All Features
               </Link>
             </Button>
@@ -430,7 +405,7 @@ export default function ExportImportPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => router.push(`/${project.shortId}`)}
+                              onClick={() => navigate(`/${project.shortId}`)}
                             >
                               Open
                             </Button>
@@ -597,12 +572,12 @@ export default function ExportImportPage() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-sm">
                 <span className="text-muted-foreground">Love drawing tools?</span>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="https://excalidraw.com" target="_blank" rel="noopener noreferrer">
+                  <Link to="https://excalidraw.com" target="_blank" rel="noopener noreferrer">
                     Try Original Excalidraw
                   </Link>
                 </Button>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="https://plus.excalidraw.com/plus" target="_blank" rel="noopener noreferrer">
+                  <Link to="https://plus.excalidraw.com/plus" target="_blank" rel="noopener noreferrer">
                     Support with Excalidraw Plus
                   </Link>
                 </Button>

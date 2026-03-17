@@ -1,4 +1,3 @@
-"use client"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,10 +21,9 @@ import {
     Folder,
     Globe
 } from "lucide-react"
-import Link from "next/link"
+import {  Link  } from 'react-router-dom'
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
+// Force dynamic rendering (Removed)
 
 export default function FeaturesPage() {
     // SEO structured data
@@ -205,7 +203,7 @@ export default function FeaturesPage() {
             <header className="mb-8">
                     <nav className="flex items-center space-x-2 mb-4" aria-label="Breadcrumb">
                         <Button variant="ghost" size="sm" asChild>
-                            <Link href="/">
+                            <Link to="/">
                                 <ArrowLeft className="w-4 h-4" />
                                 Back to Projects
                             </Link>
@@ -430,7 +428,7 @@ export default function FeaturesPage() {
 
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <Button size="lg" asChild>
-                                    <Link href="/">
+                                    <Link to="/">
                                         Start Using Enhanced Version
                                     </Link>
                                 </Button>
@@ -502,10 +500,10 @@ export default function FeaturesPage() {
                             <div className="mb-6 p-4 bg-yellow-100 text-yellow-900 dark:bg-yellow-900/20 dark:text-yellow-200 rounded-3xl text-center">
                                 <p className="mb-3">This project is not affiliated with Excalidraw or the Excalidraw team. It was developed using @excalidraw/excalidraw just for fun and as a timepass.</p>
                                 <div className="flex flex-wrap justify-center gap-4 text-sm">
-                                    <Link href="https://github.com/excalidraw/excalidraw" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                    <Link to="https://github.com/excalidraw/excalidraw" target="_blank" rel="noopener noreferrer" className="hover:underline">
                                         📦 Excalidraw Monorepo
                                     </Link>
-                                    <Link href="https://github.com/S4tyendra/excalidraw" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                    <Link to="https://github.com/S4tyendra/excalidraw" target="_blank" rel="noopener noreferrer" className="hover:underline">
                                         🚀 This Project's Repo
                                     </Link>
                                 </div>
@@ -525,7 +523,7 @@ export default function FeaturesPage() {
                                         Try the amazing free version that inspired this project
                                     </p>
                                     <Button asChild variant="outline" size="sm">
-                                        <Link href="https://excalidraw.com" target="_blank" rel="noopener noreferrer">
+                                        <Link to="https://excalidraw.com" target="_blank" rel="noopener noreferrer">
                                             Visit Excalidraw.com
                                         </Link>
                                     </Button>
@@ -537,7 +535,7 @@ export default function FeaturesPage() {
                                         Support the creators and get official premium features
                                     </p>
                                     <Button asChild size="sm">
-                                        <Link href="https://plus.excalidraw.com/plus" target="_blank" rel="noopener noreferrer">
+                                        <Link to="https://plus.excalidraw.com/plus" target="_blank" rel="noopener noreferrer">
                                             Upgrade to Excalidraw Plus
                                         </Link>
                                     </Button>

@@ -1,16 +1,12 @@
-"use client"
 
-import dynamic from "next/dynamic"
+import { lazy, Suspense } from 'react'
 import { ServiceWorkerProvider } from "@/components/service-worker-provider"
 
-// Dynamically import components that use browser APIs
-const InstallPrompt = dynamic(() => import("@/components/install-prompt").then(mod => ({ default: mod.InstallPrompt })), {
-  ssr: false
-})
+const InstallPromptLoader = lazy(() => import("@/components/install-prompt").then(mod => ({ default: mod.InstallPrompt })))
+const InstallPrompt = (props: any) => <Suspense fallback={null}><InstallPromptLoader {...props} /></Suspense>
 
-const OfflineIndicator = dynamic(() => import("@/components/offline-indicator").then(mod => ({ default: mod.OfflineIndicator })), {
-  ssr: false
-})
+const OfflineIndicatorLoader = lazy(() => import("@/components/offline-indicator").then(mod => ({ default: mod.OfflineIndicator })))
+const OfflineIndicator = (props: any) => <Suspense fallback={null}><OfflineIndicatorLoader {...props} /></Suspense>
 
 interface ClientProvidersProps {
   children: React.ReactNode

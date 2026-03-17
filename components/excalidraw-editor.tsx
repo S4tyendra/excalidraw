@@ -1,4 +1,3 @@
-"use client"
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { Excalidraw, THEME } from "@excalidraw/excalidraw"
@@ -8,13 +7,13 @@ import { Menu, Sun, Moon, Share2 } from "lucide-react"
 import { ProjectManager, type Project } from "@/lib/project-manager"
 import { useToast } from "@/hooks/use-toast"
 import { useTheme } from "next-themes"
-import { useRouter } from "next/navigation"
+import {  useNavigate  } from 'react-router-dom'
 import { useDebounce } from "@/hooks/use-debounce"
 import { ProjectSidebar } from "./project-sidebar"
 import { OfflineIndicator } from "./offline-indicator"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { tr } from "date-fns/locale"
-import Link from "next/link"
+import {  Link  } from 'react-router-dom'
 import { CloudSync } from "@/lib/cloud-sync"
 import { ShareDialog } from "./share-dialog"
 
@@ -37,7 +36,7 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
   const hasInitialized = useRef(false)
   const syncAbortRef = useRef<AbortController | null>(null)
   const { toast } = useToast()
-  const router = useRouter()
+  const router = useNavigate()
   const { theme, setTheme } = useTheme()
 
   // Memoize initial data to prevent unnecessary re-renders
@@ -296,7 +295,7 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
   }
 
   const handleProjectSelect = (selectedProject: Project) => {
-    router.push(`/${selectedProject.shortId}`)
+    navigate(`/${selectedProject.shortId}`)
   }
 
   const excalidrawTheme = theme === "dark" ? THEME.DARK : THEME.LIGHT
