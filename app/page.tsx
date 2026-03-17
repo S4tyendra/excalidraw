@@ -21,6 +21,9 @@ import dynamic from "next/dynamic"
 import { searchProjects } from "@/lib/fuzzy-search"
 import Link from "next/link"
 import Head from "next/head"
+import Signin from "@/components/signin"
+
+import { CloudSync } from "@/lib/cloud-sync"
 
 const ExcalidrawEditor = dynamic(() => import("@/components/excalidraw-editor"), { ssr: false })
 
@@ -45,6 +48,58 @@ export default function HomePage() {
   useEffect(() => {
     const loadedProjects = ProjectManager.getAllProjects()
     setProjects(loadedProjects)
+
+    // Background sync on "/"
+    if (CloudSync.getSession()) {
+      CloudSync.fetchServerProjects().then(async (sp) => {
+        if (!sp) return;
+        let p = ProjectManager.getAllProjects();
+        let changed = false;
+        
+        // get server projects, new projects? clone them to local
+        for (const serverP of sp) {
+          const localP = p.find((l: any) => l.id === serverP.id);
+          if (!localP) {
+            const fullData = await CloudSync.fetchFullProject(serverP.id);
+            if (fullData) {
+              const toSave = {
+                id: fullData.id || serverP.id,
+                shortId: fullData.shortId || serverP.shortId || Math.random().toString(36).substring(2, 8),
+                name: fullData.name || serverP.name || "Untitled",
+                description: fullData.description || serverP.description || "",
+                createdAt: fullData.createdAt || serverP.createdAt || new Date().toISOString(),
+                updatedAt: fullData.updatedAt || (serverP.last_edited_ts ? new Date(serverP.last_edited_ts).toISOString() : new Date().toISOString()),
+                lastSyncedAt: new Date().toISOString(),
+                isOfflineOnly: false,
+                data: {
+                  elements: fullData.data?.elements || [],
+                  appState: fullData.data?.appState || {},
+                  files: fullData.data?.files || {},
+                  libraryItems: fullData.data?.libraryItems || []
+                }
+              };
+              p.push(toSave);
+              changed = true;
+            }
+          }
+        }
+
+        // if client has new project? upload to server.
+        for (const localP of p) {
+          const serverP = sp.find((s: any) => s.id === localP.id);
+          if (!serverP || new Date(localP.updatedAt).getTime() > new Date(serverP.updatedAt || serverP.last_edited_ts || 0).getTime()) {
+            await CloudSync.uploadProject(localP);
+            localP.lastSyncedAt = new Date().toISOString();
+            changed = true;
+          }
+        }
+        
+        if (changed) {
+          localStorage.setItem("excalidraw-projects", JSON.stringify(p));
+          setProjects([...p]);
+        }
+      });
+    }
   }, [])
 
   // Check for shortId in pathname whenever it changes
@@ -193,12 +248,12 @@ export default function HomePage() {
         <div className="container mx-auto p-6" suppressHydrationWarning>
           <header className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold">Free Online Drawing Tool - Excalidraw</h1>
-              <p className="text-muted-foreground mt-2">
+              <h1 className="text-xl font-bold">Free Online Drawing Tool - Excalidraw</h1>
+              <p className="text-muted-foreground mt-2 text-sm">
                 Create beautiful diagrams, wireframes, and collaborative sketches. Manage multiple drawing projects with ease.
               </p>
               {/* SEO-optimized subtitle */}
-              <div className="mt-4 text-sm text-muted-foreground">
+              <div className="mt-4 text-xs text-muted-foreground">
                 <p className="flex items-center gap-2">
                   <Palette className="w-4 h-4" />
                   Professional diagramming tool for designers, developers, and teams
@@ -229,6 +284,7 @@ export default function HomePage() {
                   Features
                 </Link>
               </Button>
+              <Signin />
             </nav>
           </header>
 
