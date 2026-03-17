@@ -41,7 +41,7 @@ export default function HomePage() {
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [newProject, setNewProject] = useState({ name: "", description: "" })
   const { theme, setTheme } = useTheme()
-  const router = useNavigate()
+  const navigate = useNavigate()
   const pathname = useLocation().pathname
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
@@ -67,12 +67,12 @@ export default function HomePage() {
         setSelectedProject(project)
       } else {
         // Project not found, redirect to home
-        navigate('/')
+        navigate("/")
       }
     } else {
       setSelectedProject(null)
     }
-  }, [pathname, router])
+  }, [pathname, navigate])
 
   const handleCreateProject = () => {
     if (!newProject.name.trim()) return
@@ -214,14 +214,14 @@ export default function HomePage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
-                    <a href="/export-import">Export / Import</a>
+                    <Link to="/export-import">Export / Import</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <a href="/shared-links">Shared Links</a>
+                    <Link to="/shared-links">Shared Links</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <a href="/features">Features</a>
+                    <Link to="/features">Features</Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

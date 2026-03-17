@@ -7,8 +7,8 @@ import { CloudSync } from "@/lib/cloud-sync"
 import { ArrowRightLeft, Loader2, Database, UploadCloud } from "lucide-react"
 
 export default function CallbackPage() {
-  const router = useNavigate()
-  const searchParams = useSearchParams()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const token = searchParams.get("token")
 
   const [loading, setLoading] = useState(true)

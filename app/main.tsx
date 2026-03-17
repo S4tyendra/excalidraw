@@ -16,8 +16,7 @@ import { ClientProviders } from "@/components/client-providers";
 
 import "./globals.css";
 
-// Use hash router to match user's previous preference and avoid Cloudflare Pages single-page redirection issues without explicit rules
-const router = createHashRouter([
+const router = createBrowserRouter([
   { path: "/", element: <HomePage /> },
   { path: "/:slug", element: <HomePage /> }, 
   { path: "/share/:slug", element: <SharePage /> },
