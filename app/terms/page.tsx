@@ -35,14 +35,36 @@ export default function TermsPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">3. User Content</h2>
-          <p>
-            You retain full ownership of all drawings and data you create on the platform. The platform claims no intellectual property rights over the material you provide to the service.
-          </p>
-          <p className="mt-4 text-red-600 dark:text-red-400 font-semibold bg-red-50 dark:bg-red-900/10 p-4 rounded-md">
-            Warning: The creator of the site does not care about what you draw or what data you sync, nor can they be held responsible for your data loss. 
-            Do not draw or host illegal material using the Cloud Sync or Share Link features. 
-            Any violation or abuse will result in immediate termination without warning and reporting to authorities.
+          <h2 className="text-2xl font-semibold mb-4">3. User Content & API Policy</h2>
+          <div className="bg-muted p-4 rounded-lg mb-6 text-sm border-l-4 border-primary">
+            <strong>TL;DR:</strong> Your data, your legal liability. Do not attack our APIs. CSAM gets you instantly nuked.
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <span className="font-bold text-primary shrink-0">•</span>
+              <p>
+                <strong>Content & Liability:</strong> We do not monitor, endorse, or give a damn about what you store, sync, or draw. Whether it is adult material, illegal content, or anything else, you assume 100% of the legal liability. We are not responsible for any data loss under any circumstances.
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <span className="font-bold text-primary shrink-0">•</span>
+              <p>
+                <strong>API Usage:</strong> Do not abuse, exploit, or launch attacks against our infrastructure. The codebase is open source. Contribute to it responsibly instead of acting like a malicious idiot.
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <span className="font-bold text-destructive shrink-0">•</span>
+              <p>
+                <strong>Zero Tolerance:</strong> The single absolute prohibition is child sexual abuse material (CSAM). Any such content will be automatically and permanently deleted without notice.
+              </p>
+            </div>
+          </div>
+          
+          <p className="mt-6 font-bold text-destructive p-4 border border-destructive/20 rounded-md bg-destructive/5">
+            Any violation of the API or CSAM rules will result in immediate termination of your access.
           </p>
         </section>
 
