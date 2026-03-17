@@ -13,7 +13,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Edit, Trash2, FileText, Sun, Moon, Search, Palette, Share2, Layers } from "lucide-react"
+import { Plus, Edit, Trash2, FileText, Sun, Moon, Search, Palette, EllipsisVertical } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { ProjectManager, type Project } from "@/lib/project-manager"
 import { useTheme } from "next-themes"
 import { useRouter, usePathname } from "next/navigation"
@@ -46,60 +53,9 @@ export default function HomePage() {
   }, [projects, searchQuery])
 
   useEffect(() => {
-    const loadedProjects = ProjectManager.getAllProjects()
-    setProjects(loadedProjects)
-
-    // Background sync on "/"
-    if (CloudSync.getSession()) {
-      CloudSync.fetchServerProjects().then(async (sp) => {
-        if (!sp) return;
-        let p = ProjectManager.getAllProjects();
-        let changed = false;
-        
-        // get server projects, new projects? clone them to local
-        for (const serverP of sp) {
-          const localP = p.find((l: any) => l.id === serverP.id);
-          if (!localP) {
-            const fullData = await CloudSync.fetchFullProject(serverP.id);
-            if (fullData) {
-              const toSave = {
-                id: fullData.id || serverP.id,
-                shortId: fullData.shortId || serverP.shortId || Math.random().toString(36).substring(2, 8),
-                name: fullData.name || serverP.name || "Untitled",
-                description: fullData.description || serverP.description || "",
-                createdAt: fullData.createdAt || serverP.createdAt || new Date().toISOString(),
-                updatedAt: fullData.updatedAt || (serverP.last_edited_ts ? new Date(serverP.last_edited_ts).toISOString() : new Date().toISOString()),
-                lastSyncedAt: new Date().toISOString(),
-                isOfflineOnly: false,
-                data: {
-                  elements: fullData.data?.elements || [],
-                  appState: fullData.data?.appState || {},
-                  files: fullData.data?.files || {},
-                  libraryItems: fullData.data?.libraryItems || []
-                }
-              };
-              p.push(toSave);
-              changed = true;
-            }
-          }
-        }
-
-        // if client has new project? upload to server.
-        for (const localP of p) {
-          const serverP = sp.find((s: any) => s.id === localP.id);
-          if (!serverP || new Date(localP.updatedAt).getTime() > new Date(serverP.updatedAt || serverP.last_edited_ts || 0).getTime()) {
-            await CloudSync.uploadProject(localP);
-            localP.lastSyncedAt = new Date().toISOString();
-            changed = true;
-          }
-        }
-        
-        if (changed) {
-          localStorage.setItem("excalidraw-projects", JSON.stringify(p));
-          setProjects([...p]);
-        }
-      });
-    }
+    // Only load from local storage on mount — no server fetch here.
+    // Per-project server sync happens in ExcalidrawEditor when a project is opened.
+    setProjects(ProjectManager.getAllProjects())
   }, [])
 
   // Check for shortId in pathname whenever it changes
@@ -123,12 +79,15 @@ export default function HomePage() {
     if (!newProject.name.trim()) return
 
     const project = ProjectManager.createProject(newProject.name, newProject.description)
-    const updatedProjects = ProjectManager.getAllProjects()
-    setProjects(updatedProjects)
+    setProjects(ProjectManager.getAllProjects())
     setNewProject({ name: "", description: "" })
     setIsCreateDialogOpen(false)
 
-    // Navigate to the new project using Next.js router
+    // Fire-and-forget: upload to server if logged in
+    if (CloudSync.getSession()) {
+      CloudSync.uploadProject(project).catch(console.error)
+    }
+
     router.push(`/${project.shortId}`)
   }
 
@@ -139,18 +98,27 @@ export default function HomePage() {
       name: editingProject.name,
       description: editingProject.description,
     })
+    const updated = ProjectManager.getProject(editingProject.id)
     setProjects(ProjectManager.getAllProjects())
     setIsEditDialogOpen(false)
     setEditingProject(null)
+
+    // Fire-and-forget: sync rename to server
+    if (updated && CloudSync.getSession()) {
+      CloudSync.uploadProject(updated).catch(console.error)
+    }
   }
 
   const handleDeleteProject = (projectId: string) => {
     if (confirm("Are you sure you want to delete this project?")) {
       ProjectManager.deleteProject(projectId)
-      const updatedProjects = ProjectManager.getAllProjects()
-      setProjects(updatedProjects)
+      setProjects(ProjectManager.getAllProjects())
       if (selectedProject?.id === projectId) {
         router.push('/')
+      }
+      // Fire-and-forget: delete from server if logged in
+      if (CloudSync.getSession()) {
+        CloudSync.deleteServerProject(projectId).catch(console.error)
       }
     }
   }
@@ -271,19 +239,26 @@ export default function HomePage() {
                 New Project
               </Button>
 
-              <Button asChild variant="outline" size="sm">
-                <Link href="/export-import" aria-label="Export and import projects">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Export/Import
-                </Link>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" aria-label="More options">
+                    <EllipsisVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <a href="/export-import">Export / Import</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="/shared-links">Shared Links</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <a href="/features">Features</a>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-              <Button asChild variant="outline" size="sm">
-                <Link href="/features" aria-label="View feature comparison">
-                  <Layers className="w-4 h-4 mr-2" />
-                  Features
-                </Link>
-              </Button>
               <Signin />
             </nav>
           </header>
@@ -384,6 +359,15 @@ export default function HomePage() {
               </section>
             )}
           </main>
+          
+          <footer className="mt-16 pt-8 border-t text-sm text-muted-foreground flex flex-col md:flex-row items-center justify-between gap-4">
+            <p>&copy; {new Date().getFullYear()} Satyendra. All rights reserved.</p>
+            <div className="flex items-center space-x-4">
+              <Link href="/privacy" className="hover:underline">Privacy</Link>
+              <Link href="/terms" className="hover:underline">Terms</Link>
+              <Link href="/contact" className="hover:underline">Contact</Link>
+            </div>
+          </footer>
         </div>
       )}
 

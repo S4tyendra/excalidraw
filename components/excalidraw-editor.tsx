@@ -15,6 +15,8 @@ import { OfflineIndicator } from "./offline-indicator"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { tr } from "date-fns/locale"
 import Link from "next/link"
+import { CloudSync } from "@/lib/cloud-sync"
+import { ShareDialog } from "./share-dialog"
 
 interface ExcalidrawEditorProps {
   project: Project
@@ -30,7 +32,10 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
   const [currentLibraryItems, setCurrentLibraryItems] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<"idle" | "pending" | "syncing" | "saved">("idle")
+  const [isShareOpen, setIsShareOpen] = useState(false)
   const hasInitialized = useRef(false)
+  const syncAbortRef = useRef<AbortController | null>(null)
   const { toast } = useToast()
   const router = useRouter()
   const { theme, setTheme } = useTheme()
@@ -46,16 +51,17 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
     libraryItems: project.data?.libraryItems || [],
   }), [project.id]) // Only re-create when project.id changes
 
-  // Debounce the save data to avoid too frequent saves
-  const debouncedElements = useDebounce(currentElements, 500)
-  const debouncedAppState = useDebounce(currentAppState, 500)
-  const debouncedFiles = useDebounce(currentFiles, 500)
-  const debouncedLibraryItems = useDebounce(currentLibraryItems, 500)
+  // 2-second debounce — gives user time to finish a stroke before saving
+  const debouncedElements = useDebounce(currentElements, 2000)
+  const debouncedAppState = useDebounce(currentAppState, 2000)
+  const debouncedFiles = useDebounce(currentFiles, 2000)
+  const debouncedLibraryItems = useDebounce(currentLibraryItems, 2000)
 
-  // Handle Excalidraw changes - use proper event handlers instead of polling
+  // Handle Excalidraw changes — mark pending on every raw change
   const handleElementsChange = useCallback((elements: readonly any[]) => {
     if (!hasInitialized.current) return
     setCurrentElements([...elements])
+    setSaveStatus("pending")
   }, [])
 
   const handleAppStateChange = useCallback((appState: any) => {
@@ -66,28 +72,98 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
   const handleFilesChange = useCallback((files: any) => {
     if (!hasInitialized.current) return
     setCurrentFiles(files)
+    setSaveStatus("pending")
   }, [])
 
   const handleLibraryChange = useCallback((libraryItems: readonly any[]) => {
     if (!hasInitialized.current) return
     setCurrentLibraryItems([...libraryItems])
+    setSaveStatus("pending")
   }, [])
+
+
+  const pendingServerData = useRef<any>(null)
 
   useEffect(() => {
     setIsLoading(false)
     hasInitialized.current = false // Reset for new project
+    pendingServerData.current = null
     
     // Reset state when project changes
     setCurrentElements(project.data?.elements || [])
     setCurrentAppState(project.data?.appState || {})
     setCurrentFiles(project.data?.files || {})
     setCurrentLibraryItems(project.data?.libraryItems || [])
+
+    // Cloud Sync: when user opens a project, if online, get data from server and merge
+    if (typeof navigator !== 'undefined' && navigator.onLine && CloudSync.getSession()) {
+      CloudSync.fetchFullProject(project.id).then((fullData) => {
+        // fullData.data is already parsed (JSON.parse done inside fetchFullProject)
+        if (!fullData || !fullData.data) return;
+
+        const serverTs = Number(fullData.last_edited_ts);
+        const localTs = new Date(project.updatedAt).getTime();
+
+        // Only bother merging if server has something newer or different
+        const mergedElements = CloudSync.mergeElements(
+          project.data?.elements || [],
+          fullData.data.elements || []
+        );
+        const mergedFiles = CloudSync.mergeFiles(
+          project.data?.files || {},
+          fullData.data.files || {}
+        );
+        const mergedLibraryItems = [
+          ...(project.data?.libraryItems || []),
+          ...(fullData.data.libraryItems || []),
+        ].filter((v, i, a) => a.findIndex((v2: any) => v2.id === v.id) === i);
+        const mergedAppState = {
+          ...(project.data?.appState || {}),
+          ...(fullData.data.appState || {}),
+        };
+
+        setCurrentElements(mergedElements);
+        setCurrentFiles(mergedFiles);
+        setCurrentLibraryItems(mergedLibraryItems);
+        setCurrentAppState(mergedAppState);
+
+        // If API already initialized, push immediately; otherwise store for API init effect
+        if (excalidrawAPI && hasInitialized.current) {
+          excalidrawAPI.updateScene({ elements: mergedElements, appState: mergedAppState });
+          const fileValues = Object.values(mergedFiles);
+          if (fileValues.length > 0) {
+            excalidrawAPI.addFiles(fileValues);
+          }
+        } else {
+          pendingServerData.current = { elements: mergedElements, appState: mergedAppState, files: mergedFiles };
+        }
+
+        // Persist merged data locally
+        ProjectManager.updateProjectData(project.id, {
+          elements: mergedElements,
+          appState: mergedAppState,
+          files: mergedFiles,
+          libraryItems: mergedLibraryItems,
+        });
+      }).catch((e) => console.error("Failed to sync project from server", e));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project.id])
 
   // Set up the excalidraw API and mark as initialized
+  // If server data arrived before API was ready, push it now
   useEffect(() => {
     if (excalidrawAPI) {
       hasInitialized.current = true
+      if (pendingServerData.current) {
+        const { elements, appState, files } = pendingServerData.current;
+        excalidrawAPI.updateScene({ elements, appState });
+        const fileValues = Object.values(files);
+        if (fileValues.length > 0) {
+          excalidrawAPI.addFiles(fileValues);
+        }
+        pendingServerData.current = null;
+      }
     }
   }, [excalidrawAPI])
 
@@ -148,20 +224,17 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
 
   // Auto-save when debounced data changes
   useEffect(() => {
-    // Skip if we haven't initialized yet
-    if (!hasInitialized.current) {
-      return
+    if (!hasInitialized.current) return
+
+    // Abort any in-flight upload before starting a new one
+    if (syncAbortRef.current) {
+      syncAbortRef.current.abort()
     }
+    const abortController = new AbortController()
+    syncAbortRef.current = abortController
 
     try {
-      console.log('Auto-saving project data...', {
-        elements: debouncedElements.length,
-        appState: Object.keys(debouncedAppState).length,
-        files: Object.keys(debouncedFiles).length,
-        libraryItems: debouncedLibraryItems.length
-      })
-      
-      ProjectManager.updateProjectData(project.id, {
+      const savedData = {
         elements: debouncedElements,
         appState: {
           viewBackgroundColor: debouncedAppState.viewBackgroundColor || "#fdf8f6",
@@ -185,10 +258,37 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
         },
         files: debouncedFiles,
         libraryItems: debouncedLibraryItems,
-      })
+      }
+
+      // Local save is always synchronous and instant
+      ProjectManager.updateProjectData(project.id, savedData)
+
+      // Cloud sync: abort-aware fire-and-forget
+      if (typeof navigator !== 'undefined' && navigator.onLine && CloudSync.getSession()) {
+        setSaveStatus("syncing")
+        const latestProject = ProjectManager.getProject(project.id)
+        if (latestProject) {
+          CloudSync.uploadProject({ ...latestProject, data: savedData }, abortController.signal)
+            .then((ok) => {
+              if (abortController.signal.aborted) return
+              setSaveStatus("saved")
+            })
+            .catch((err) => {
+              if (abortController.signal.aborted) return
+              console.error("Cloud sync failed:", err)
+              setSaveStatus("saved") // still saved locally
+            })
+        } else {
+          setSaveStatus("saved")
+        }
+      } else {
+        setSaveStatus("saved")
+      }
     } catch (error) {
       console.error("Error auto-saving project:", error)
+      setSaveStatus("pending")
     }
+
   }, [debouncedElements, debouncedAppState, debouncedFiles, debouncedLibraryItems, project.id])
 
   const toggleTheme = () => {
@@ -222,11 +322,6 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
       onLibraryChange={(libraryItems) => {
         handleLibraryChange(libraryItems)
       }}
-      renderTopRightUI={() => (
-        <div className="flex items-center space-x-2">
-          <div className="text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">Auto save!</div>
-        </div>
-      )}
       handleKeyboardGlobally={true}
     />
   ), [initialData, excalidrawTheme, project.name, handleElementsChange, handleAppStateChange, handleFilesChange, handleLibraryChange])
@@ -242,8 +337,18 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
             <div className="flex items-center space-x-2">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="cursor-default">
+                  <div className="cursor-default flex items-center gap-2">
                     <h1 className="text-base font-semibold">{project.name}</h1>
+                    {/* Save status dot — lives here in our header, always reactive */}
+                    {saveStatus === "pending" && (
+                      <span className="w-2 h-2 rounded-full bg-orange-400" title="Pending changes" />
+                    )}
+                    {saveStatus === "syncing" && (
+                      <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" title="Syncing..." />
+                    )}
+                    {saveStatus === "saved" && (
+                      <span className="w-2 h-2 rounded-full bg-green-500" title="Saved" />
+                    )}
                   </div>
                 </TooltipTrigger>
                 {project.description && (
@@ -258,11 +363,11 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
             <Button variant="outline" size="sm" onClick={toggleTheme}>
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            <Button asChild variant="outline" size="sm" title="Share functionality coming soon">
-              <Link href="/export-import">
+            {CloudSync.getSession() && (
+              <Button variant="outline" size="sm" onClick={() => setIsShareOpen(true)} title="Share project">
                 <Share2 className="w-4 h-4" />
-              </Link>
-            </Button>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -278,6 +383,13 @@ export default function ExcalidrawEditor({ project, onProjectChange, onNewProjec
         currentProject={project}
         onProjectSelect={handleProjectSelect}
         onNewProject={onNewProject}
+      />
+
+      <ShareDialog
+        open={isShareOpen}
+        onOpenChange={setIsShareOpen}
+        projectId={project.id}
+        projectName={project.name}
       />
     </TooltipProvider>
   )

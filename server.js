@@ -2,8 +2,9 @@
 const GITHUB_CLIENT_ID = "...";
 const GITHUB_CLIENT_SECRET = "...";
 const TURSO_URL = "...";
-const TURSO_TOKEN = "...";
-const X_DEVH_API_KEY = "...";
+const TURSO_TOKEN = "........";
+const X_DEVH_API_KEY = ".";
+const ALLOWED_ORIGINS = ["https://draw.devh.in"];
 
 // Helper to interact with Turso via raw HTTP
 async function dbQuery(sql, args = []) {
@@ -51,7 +52,6 @@ async function dbQuery(sql, args = []) {
   });
 }
 
-// Helper to validate session
 async function getUserFromReq(request) {
   const authHeader = request.headers.get("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
@@ -62,11 +62,11 @@ async function getUserFromReq(request) {
   return sessions[0].user_id;
 }
 
-// Process images to upload to external server and replace with URLs
 async function processBase64Images(data) {
-  if (!data || !data.data || !data.data.files) return;
+  // FIX: Changed from data.data.files to data.files
+  if (!data || !data.files) return;
 
-  const files = data.data.files;
+  const files = data.files;
   for (const [fileId, fileObj] of Object.entries(files)) {
     if (fileObj.dataURL && fileObj.dataURL.startsWith("data:image/")) {
       const base64Str = fileObj.dataURL.split(',')[1];
@@ -92,17 +92,21 @@ async function processBase64Images(data) {
       const ext = mimeType.split('/')[1] || 'png';
 
       // Upload to external server
-      await fetch('https://x.devh.in/api/tools/file', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${X_DEVH_API_KEY}`,
-          'x-filename': `${fileId}.${ext}`,
-          'x-slug': fileId
-        },
-        body: blob
-      });
+      try {
+        await fetch('https://x.devh.in/api/tools/file', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${X_DEVH_API_KEY}`,
+            'x-filename': `${fileId}.${ext}`,
+            'x-slug': fileId
+          },
+          body: blob
+        });
+      } catch (e) {
+        console.error("Upload failed, but continuing to swap URL", e);
+      }
 
-      // Swap out the base64 for the URL regardless of upload success/failure (handles "Slug already exists")
+      // Swap out the base64 for the URL
       fileObj.dataURL = `https://x.devh.in/f/${fileId}`;
     }
   }
@@ -114,22 +118,46 @@ export default {
     const path = url.pathname;
     const method = request.method;
 
+    // --- CORS SETUP ---
+    const origin = request.headers.get("Origin");
+    const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+    
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": allowedOrigin,
+      "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Max-Age": "86400",
+      "Access-Control-Allow-Credentials": "true"
+    };
+
+    // Helper to return responses with CORS
+    const respond = (body, status = 200, contentType = "application/json") => {
+      return new Response(typeof body === 'string' ? body : JSON.stringify(body), {
+        status,
+        headers: { ...corsHeaders, "Content-Type": contentType }
+      });
+    };
+
+    if (method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
+
     try {
       if (path === "/auth/signin" && method === "GET") {
-        const origin = url.searchParams.get("origin");
-        if (!origin) return new Response("Missing origin parameter", { status: 400 });
+        const originParam = url.searchParams.get("origin");
+        if (!originParam) return respond({ error: "Missing origin" }, 400);
 
-        const state = encodeURIComponent(origin);
+        const state = encodeURIComponent(originParam);
         const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=user:email&state=${state}`;
         
+        // Redirects don't need CORS headers as they change the top-level window location
         return Response.redirect(githubAuthUrl, 302);
       }
 
       if (path === "/auth/success" && method === "GET") {
         const code = url.searchParams.get("code");
         const state = url.searchParams.get("state"); 
-        
-        if (!code || !state) return new Response("Missing code or state", { status: 400 });
+        if (!code || !state) return respond({ error: "Missing code/state" }, 400);
 
         const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
           method: "POST",
@@ -137,103 +165,81 @@ export default {
           body: JSON.stringify({ client_id: GITHUB_CLIENT_ID, client_secret: GITHUB_CLIENT_SECRET, code })
         });
         const tokenData = await tokenRes.json();
-        const accessToken = tokenData.access_token;
-        if (!accessToken) return new Response("Failed to get token", { status: 400 });
+        if (!tokenData.access_token) return respond({ error: "GitHub Auth Failed" }, 400);
 
         const userRes = await fetch("https://api.github.com/user", {
-          headers: { "Authorization": `Bearer ${accessToken}`, "User-Agent": "Cloudflare-Worker" }
+          headers: { "Authorization": `Bearer ${tokenData.access_token}`, "User-Agent": "Cloudflare-Worker" }
         });
         const userData = await userRes.json();
 
         const emailRes = await fetch("https://api.github.com/user/emails", {
-          headers: { "Authorization": `Bearer ${accessToken}`, "User-Agent": "Cloudflare-Worker" }
+          headers: { "Authorization": `Bearer ${tokenData.access_token}`, "User-Agent": "Cloudflare-Worker" }
         });
         const emailData = await emailRes.json();
         const primaryEmail = emailData.find(e => e.primary)?.email || emailData[0]?.email;
-        if (!primaryEmail) return new Response("No email found on GitHub", { status: 400 });
 
         const userId = `github_${userData.id}`;
-        const userName = userData.name || userData.login;
-
         await dbQuery(
           `INSERT INTO users (id, email, name) VALUES (?, ?, ?) 
            ON CONFLICT(email) DO UPDATE SET name=excluded.name, id=excluded.id`, 
-          [userId, primaryEmail, userName]
+          [userId, primaryEmail, userData.name || userData.login]
         );
 
         const sessionId = crypto.randomUUID();
-        const ip = request.headers.get("CF-Connecting-IP") || "";
-        const ua = request.headers.get("User-Agent") || "";
-        
         await dbQuery(
           `INSERT INTO sessions (id, user_id, ip_address, user_agent, created_at) VALUES (?, ?, ?, ?, ?)`, 
-          [sessionId, userId, ip, ua, Date.now()]
+          [sessionId, userId, request.headers.get("CF-Connecting-IP") || "", request.headers.get("User-Agent") || "", Date.now()]
         );
 
-        const origin = decodeURIComponent(state);
-        const redirectUrl = `${origin}/callback?token=${sessionId}`;
-        
-        return Response.redirect(redirectUrl, 302);
+        return Response.redirect(`${decodeURIComponent(state)}/callback?token=${sessionId}`, 302);
       }
 
       if (path === "/auth/signout" && method === "POST") {
         const authHeader = request.headers.get("Authorization");
-        if (authHeader && authHeader.startsWith("Bearer ")) {
-          const sessionId = authHeader.split(" ")[1];
-          await dbQuery(`DELETE FROM sessions WHERE id = ?`, [sessionId]);
+        if (authHeader?.startsWith("Bearer ")) {
+          await dbQuery(`DELETE FROM sessions WHERE id = ?`, [authHeader.split(" ")[1]]);
         }
-        return new Response(JSON.stringify({ message: "Logged out" }), { status: 200, headers: { "Content-Type": "application/json" }});
+        return respond({ message: "Logged out" });
       }
 
-      // ================================================================
-      // PROTECTED ROUTES BELOW
-      // ================================================================
+      // PROTECTED ROUTES
       const userId = await getUserFromReq(request);
       if (!userId && path.match(/^\/(read|write)/)) {
-        return new Response("Unauthorized", { status: 401 });
+        return respond({ error: "Unauthorized" }, 401);
       }
 
       if (path === "/read/projects" && method === "GET") {
-        const projects = await dbQuery(`SELECT data FROM projects WHERE user_id = ?`, [userId]);
+        // Fetch only the metadata columns
+        const projects = await dbQuery(
+          `SELECT id, slug, title, last_edited_ts FROM projects WHERE user_id = ? ORDER BY last_edited_ts DESC`, 
+          [userId]
+        );
         
-        const metadata = projects.map(p => {
-          try {
-            const parsed = JSON.parse(p.data);
-            if (parsed.data) {
-              delete parsed.data.elements;
-              delete parsed.data.files;
-            }
-            return parsed;
-          } catch (e) {
-            return null;
-          }
-        }).filter(Boolean);
-
-        return new Response(JSON.stringify(metadata), { headers: { "Content-Type": "application/json" }});
+        return respond(projects);
       }
 
       if (path.startsWith("/read/project/") && method === "GET") {
         const projectId = path.split("/").pop();
-        
         const projects = await dbQuery(`SELECT * FROM projects WHERE id = ? AND user_id = ?`, [projectId, userId]);
-        if (projects.length === 0) return new Response("Project not found or access denied", { status: 404 });
-        
-        return new Response(JSON.stringify(projects[0]), { headers: { "Content-Type": "application/json" }});
+        if (projects.length === 0) return respond({ error: "Not found" }, 404);
+        return respond(projects[0]);
       }
 
       if (path.startsWith("/write/project/") && method === "POST") {
         const projectId = path.split("/").pop();
         const body = await request.json();
-        const { data, last_edited_ts } = body;
+        const { data, last_edited_ts, slug, title } = body;
         
-        if (!data || !last_edited_ts) return new Response("Missing data or last_edited_ts", { status: 400 });
+        if (!data || !last_edited_ts) {
+          return respond({ error: "Missing data or last_edited_ts" }, 400);
+        }
 
-        // Check project count limits before inserting new
+        // Check project count limits for new projects
         const existingProject = await dbQuery(`SELECT id FROM projects WHERE id = ? AND user_id = ?`, [projectId, userId]);
         if (existingProject.length === 0) {
           const countRes = await dbQuery(`SELECT COUNT(id) as c FROM projects WHERE user_id = ?`, [userId]);
           if (countRes[0].c >= 30) {
-            return new Response("Project limit reached (Max 30 projects)", { status: 403 });
+            return respond({ error: "Project limit reached (Max 30 projects)" }, 403);
           }
         }
 
@@ -241,45 +247,92 @@ export default {
         try {
           await processBase64Images(data);
         } catch (err) {
-          return new Response(err.message, { status: 400 });
+          return respond({ error: err.message }, 400);
         }
 
         const stringifiedData = JSON.stringify(data);
 
-        // Max project size validation (500KB after image processing)
+        // Max project size validation (500KB)
         if (new Blob([stringifiedData]).size > 512000) {
-          return new Response("Project exceeds 500KB limit", { status: 400 });
+          return respond({ error: "Project exceeds 500KB limit" }, 400);
         }
 
+        // Insert or Update including the new slug and title columns
         await dbQuery(`
-          INSERT INTO projects (id, user_id, data, last_edited_ts) 
-          VALUES (?, ?, ?, ?)
+          INSERT INTO projects (id, user_id, data, slug, title, last_edited_ts) 
+          VALUES (?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET 
             data = excluded.data, 
+            slug = excluded.slug,
+            title = excluded.title,
             last_edited_ts = excluded.last_edited_ts 
           WHERE projects.user_id = excluded.user_id 
             AND excluded.last_edited_ts > projects.last_edited_ts
-        `, [projectId, userId, stringifiedData, last_edited_ts]);
+        `, [projectId, userId, stringifiedData, slug || null, title || null, last_edited_ts]);
 
-        const updated = await dbQuery(`SELECT * FROM projects WHERE id = ? AND user_id = ?`, [projectId, userId]);
-        return new Response(JSON.stringify(updated[0]), { headers: { "Content-Type": "application/json" }});
+        // Return the metadata of the saved project
+        return respond({
+          id: projectId,
+          slug: slug,
+          title: title,
+          last_edited_ts: last_edited_ts
+        });
       }
 
       if (path.startsWith("/write/delete/") && method === "DELETE") {
         const projectId = path.split("/").pop();
-        
         await dbQuery(`DELETE FROM projects WHERE id = ? AND user_id = ?`, [projectId, userId]);
+        return respond({ message: "Deleted" });
+      }
+      // Public Share Link - No Auth Required
+      if (path.startsWith("/share/f/") && method === "GET") {
+        const slug = path.split("/").pop();
+        const res = await fetch(`https://x.devh.in/f/${slug}`);
+        if (!res.ok) return respond({ error: "Shared project not found" }, 404);
+        const data = await res.json();
+        return respond(data);
+      }
+      if (path.startsWith("/share/") && method === "POST") {
+        const projectId = path.split("/").pop();
         
-        return new Response(JSON.stringify({ message: "Deleted successfully" }), { headers: { "Content-Type": "application/json" }});
+        // 1. Get the project data from DB
+        const projects = await dbQuery(
+          `SELECT data FROM projects WHERE id = ? AND user_id = ?`, 
+          [projectId, userId]
+        );
+        
+        if (projects.length === 0) return respond({ error: "Project not found" }, 404);
+
+        // 2. Generate a random slug for the share link
+        const shareSlug = "s_" + crypto.randomUUID().split('-')[0];
+        
+        // 3. Upload the JSON data to the external server
+        const blob = new Blob([projects[0].data], { type: 'application/json' });
+        const uploadRes = await fetch('https://x.devh.in/api/tools/file', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${X_DEVH_API_KEY}`,
+            'x-filename': `${shareSlug}.json`,
+            'x-slug': shareSlug
+          },
+          body: blob
+        });
+
+        if (!uploadRes.ok) return respond({ error: "Failed to generate share link" }, 500);
+
+        // 4. Return the new share URL
+        return respond({ 
+          shareUrl: `https://draw.devh.in/share/${shareSlug}`, // Your frontend URL
+          fileUrl: `https://x.devh.in/f/${shareSlug}`,        // The raw data URL
+          slug: shareSlug 
+        });
       }
 
-      return new Response("Not Found", { status: 404 });
+      return respond({ error: "Not Found" }, 404);
 
     } catch (err) {
-      return new Response(JSON.stringify({ error: err.message, stack: err.stack }), { 
-        status: 500, 
-        headers: { "Content-Type": "application/json" } 
-      });
+      // Critical: Even errors must return CORS headers
+      return respond({ error: err.message }, 500);
     }
   }
 };

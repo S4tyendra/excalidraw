@@ -28,24 +28,23 @@ export default function CallbackPage() {
 
   const checkSyncStatus = async () => {
     try {
-      const serverProjects = await CloudSync.fetchServerProjects() || []
+      const serverProjects = await CloudSync.fetchServerProjects()
       const localProjects = ProjectManager.getAllProjects()
 
-      // Compare if we need to sync
-      let newServer = serverProjects.find((sp: any) => !localProjects.some((lp: any) => lp.id === sp.id))
-      let newLocal = localProjects.find((lp: any) => !serverProjects.some((sp: any) => sp.id === lp.id))
-      let outdatedServer = localProjects.find((lp: any) => {
-        let sp = serverProjects.find((sp: any) => sp.id === lp.id);
-        if (!sp) return false;
-        return new Date(lp.updatedAt).getTime() > new Date(sp.updatedAt || sp.last_edited_ts || 0).getTime()
+      const newServer = serverProjects.find((sp) => !localProjects.some((lp) => lp.id === sp.id))
+      const newLocal = localProjects.find((lp) => !serverProjects.some((sp) => sp.id === lp.id))
+      const outdatedLocalFromServer = serverProjects.find((sp) => {
+        const lp = localProjects.find((l) => l.id === sp.id)
+        if (!lp) return false
+        return Number(sp.last_edited_ts) > new Date(lp.updatedAt).getTime()
       })
-      let outdatedLocal = serverProjects.find((sp: any) => {
-        let lp = localProjects.find((lp: any) => lp.id === sp.id);
-        if (!lp) return false;
-        return new Date(sp.updatedAt || sp.last_edited_ts || 0).getTime() > new Date(lp.updatedAt).getTime()
+      const outdatedServerFromLocal = localProjects.find((lp) => {
+        const sp = serverProjects.find((s) => s.id === lp.id)
+        if (!sp) return false
+        return new Date(lp.updatedAt).getTime() > Number(sp.last_edited_ts)
       })
 
-      if (newServer || newLocal || outdatedServer || outdatedLocal) {
+      if (newServer || newLocal || outdatedLocalFromServer || outdatedServerFromLocal) {
         setNeedsSync(true)
       } else {
         router.push("/")
@@ -60,93 +59,78 @@ export default function CallbackPage() {
 
   const handleSync = async () => {
     setSyncing(true)
-
     try {
-      const serverProjects = await CloudSync.fetchServerProjects() || []
+      const serverProjects = await CloudSync.fetchServerProjects()
       const localProjects = ProjectManager.getAllProjects()
+      const total = serverProjects.length + localProjects.length
+      let done = 0
 
-      const totalOperations = serverProjects.length + localProjects.length
-      let completedOps = 0;
-
-      // Ensure server projects are copied to local if new or newer
+      // --- Pull: server → local ---
       for (const sp of serverProjects) {
-        let lp = localProjects.find(l => l.id === sp.id)
-        const serverDate = new Date(sp.updatedAt || sp.last_edited_ts || 0).getTime()
-        const localDate = lp ? new Date(lp.updatedAt).getTime() : 0
+        const lp = localProjects.find((l) => l.id === sp.id)
+        const serverTs = Number(sp.last_edited_ts)
+        const localTs = lp ? new Date(lp.updatedAt).getTime() : 0
 
-        if (!lp || serverDate > localDate) {
-          // Fetch full data from server & save locally
+        if (!lp || serverTs > localTs) {
           const fullData = await CloudSync.fetchFullProject(sp.id)
           if (fullData) {
-            let projectToSave: Project = {
-              id: fullData.id || sp.id,
-              shortId: fullData.shortId || sp.shortId || Math.random().toString(36).substring(2, 8),
-              name: fullData.name || sp.name || "Untitled",
-              description: fullData.description || sp.description || "",
-              createdAt: fullData.createdAt || sp.createdAt || new Date().toISOString(),
-              updatedAt: fullData.updatedAt || new Date(sp.last_edited_ts).toISOString() || new Date().toISOString(),
+            const serverIso = new Date(serverTs).toISOString()
+            const projectToSave: Project = {
+              id: fullData.id,
+              shortId: fullData.slug,   // server uses slug as shortId
+              name: fullData.title,     // server uses title as name
+              description: lp?.description || "",
+              createdAt: lp?.createdAt || serverIso,
+              updatedAt: serverIso,
               lastSyncedAt: new Date().toISOString(),
               isOfflineOnly: false,
-              data: {
+              data: lp ? {
+                elements: CloudSync.mergeElements(lp.data?.elements || [], fullData.data?.elements || []),
+                appState: { ...(lp.data?.appState || {}), ...(fullData.data?.appState || {}) },
+                files: CloudSync.mergeFiles(lp.data?.files || {}, fullData.data?.files || {}),
+                libraryItems: [
+                  ...(lp.data?.libraryItems || []),
+                  ...(fullData.data?.libraryItems || []),
+                ].filter((v, i, a) => a.findIndex((v2: any) => v2.id === v.id) === i),
+              } : {
                 elements: fullData.data?.elements || [],
                 appState: fullData.data?.appState || {},
                 files: fullData.data?.files || {},
-                libraryItems: fullData.data?.libraryItems || []
-              }
+                libraryItems: fullData.data?.libraryItems || [],
+              },
             }
-
-            // If locally present but outdated, we should merge the data intelligently
-            if (lp) { 
-               projectToSave.data = {
-                  elements: CloudSync.mergeElements(lp.data?.elements || [], fullData.data?.elements || []),
-                  appState: { ...lp.data?.appState, ...fullData.data?.appState },
-                  files: CloudSync.mergeFiles(lp.data?.files || {}, fullData.data?.files || {}),
-                  libraryItems: [  ...(lp.data?.libraryItems || []), ...(fullData.data?.libraryItems || []) ].filter((v,i,a)=>a.findIndex(v2=>v2.id===v.id)===i) // simplistic library item merge
-               }
-            }
-
-            let allLocals = ProjectManager.getAllProjects()
-            let existingIdx = allLocals.findIndex(l => l.id === projectToSave.id)
-            if (existingIdx !== -1) {
-              // Hacky way but ProjectManager uses localStorage
-              allLocals[existingIdx] = projectToSave
-              localStorage.setItem("excalidraw-projects", JSON.stringify(allLocals))
+            const allLocals = ProjectManager.getAllProjects()
+            const idx = allLocals.findIndex((l) => l.id === projectToSave.id)
+            if (idx !== -1) {
+              allLocals[idx] = projectToSave
             } else {
               allLocals.push(projectToSave)
-              localStorage.setItem("excalidraw-projects", JSON.stringify(allLocals))
             }
+            localStorage.setItem("excalidraw-projects", JSON.stringify(allLocals))
           }
         }
-        completedOps++;
-        setProgress(Math.floor((completedOps / totalOperations) * 100))
+        done++
+        setProgress(Math.floor((done / total) * 100))
       }
 
-      // Refresh local projects list before upload pass to get any merged content synced if needed (if server was older and local merged)
+      // --- Push: local → server ---
       const refreshedLocals = ProjectManager.getAllProjects()
-
-      // Upload local projects that are new or newer to the server
       for (const lp of refreshedLocals) {
-        let sp = serverProjects.find((s: any) => s.id === lp.id)
-        const serverDate = sp ? new Date(sp.updatedAt || sp.last_edited_ts || 0).getTime() : 0
-         
-        if (!sp || new Date(lp.updatedAt).getTime() > serverDate) {
-          // Upload this local project
+        const sp = serverProjects.find((s) => s.id === lp.id)
+        const serverTs = sp ? Number(sp.last_edited_ts) : 0
+        if (!sp || new Date(lp.updatedAt).getTime() > serverTs) {
           await CloudSync.uploadProject(lp)
-          // mark as synced locally
           lp.lastSyncedAt = new Date().toISOString()
         }
-        completedOps++;
-        setProgress(Math.floor((completedOps / totalOperations) * 100))
+        done++
+        setProgress(Math.floor((done / total) * 100))
       }
 
-      // Save the lastSyncedAt tags back to local storage
       localStorage.setItem("excalidraw-projects", JSON.stringify(refreshedLocals))
-
       router.push("/")
     } catch (e) {
       console.error(e)
       setSyncing(false)
-      // Allow user to skip
     }
   }
 
