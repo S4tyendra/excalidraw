@@ -1,4 +1,4 @@
-
+import React from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,7 +21,15 @@ import {
     Folder,
     Globe
 } from "lucide-react"
-import {  Link  } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 // Force dynamic rendering (Removed)
 
@@ -306,76 +314,70 @@ export default function FeaturesPage() {
                     </div>
                 </section>
 
-                {/* Detailed feature comparison */}
-                <section aria-label="Feature comparison">
-                    <h2 className="text-2xl font-bold mb-8 text-center">Detailed Feature Comparison</h2>
+        <section aria-label="Feature comparison">
+          <h2 className="text-2xl font-bold mb-8 text-center">Detailed Feature Comparison</h2>
 
-                    <div className="space-y-8">
-                        {features.map((category, categoryIndex) => (
-                            <Card key={categoryIndex}>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-3">
-                                        {category.icon}
-                                        {category.category}
-                                        {category.category.includes("Coming Soon") && (
-                                            <Badge variant="outline" className="ml-2">
-                                                <Timer className="w-3 h-3 mr-1" />
-                                                Coming Soon
-                                            </Badge>
-                                        )}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {category.items.map((item, itemIndex) => (
-                                            <div key={itemIndex} className="border rounded-lg p-4">
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                                                    <div>
-                                                        <h4 className="font-medium mb-2 flex items-center gap-2">
-                                                            {item.feature}
-                                                            {item.upcoming && (
-                                                                <Badge variant="secondary" className="text-xs">
-                                                                    Soon
-                                                                </Badge>
-                                                            )}
-                                                        </h4>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {item.description}
-                                                        </p>
-                                                    </div>
-
-                                                    <div className="text-center">
-                                                        <p className="text-sm font-medium mb-2">Free Excalidraw</p>
-                                                        {item.free === true ? (
-                                                            <Check className="w-6 h-6 text-green-500 mx-auto" />
-                                                        ) : item.free === false ? (
-                                                            <X className="w-6 h-6 text-red-500 mx-auto" />
-                                                        ) : (
-                                                            <span className="text-sm text-muted-foreground">{item.free}</span>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="text-center">
-                                                        <p className="text-sm font-medium mb-2">Enhanced Version</p>
-                                                        {item.enhanced === true ? (
-                                                            <Check className="w-6 h-6 text-green-500 mx-auto" />
-                                                        ) : item.enhanced === false ? (
-                                                            <X className="w-6 h-6 text-red-500 mx-auto" />
-                                                        ) : (
-                                                            <Badge variant="outline" className="text-xs">
-                                                                {item.enhanced}
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                </section>
+          <Card className="overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="w-[300px]">Feature</TableHead>
+                  <TableHead className="text-center">Free Excalidraw</TableHead>
+                  <TableHead className="text-center font-bold text-primary">Enhanced Version</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {features.map((category) => (
+                  <React.Fragment key={category.category}>
+                    <TableRow className="bg-muted/30 hover:bg-muted/30">
+                      <TableCell colSpan={3} className="font-bold py-2 px-4 text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                        {category.icon && <span className="scale-75 opacity-70">{category.icon}</span>}
+                        {category.category}
+                      </TableCell>
+                    </TableRow>
+                    {category.items.map((item, itemIndex) => (
+                      <TableRow key={`${category.category}-${itemIndex}`}>
+                        <TableCell className="py-4">
+                          <div className="font-medium flex items-center gap-2">
+                            {item.feature}
+                            {item.upcoming && (
+                              <Badge variant="secondary" className="text-[10px] h-4 py-0 px-1">
+                                Soon
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {item.description}
+                          </p>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {item.free === true ? (
+                            <Check className="w-5 h-5 text-green-500 mx-auto" />
+                          ) : item.free === false ? (
+                            <X className="w-5 h-5 text-red-500 mx-auto" />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">{item.free}</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center bg-primary/5">
+                          {item.enhanced === true ? (
+                            <Check className="w-5 h-5 text-green-500 mx-auto border-2 border-green-500/20 rounded-full p-0.5" />
+                          ) : item.enhanced === false ? (
+                            <X className="w-5 h-5 text-red-500 mx-auto" />
+                          ) : (
+                            <Badge variant="default" className="text-[10px] h-4 py-0 px-1">
+                              {item.enhanced}
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </section>
 
                 {/* Cloud sync announcement */}
                 <section className="mt-12">

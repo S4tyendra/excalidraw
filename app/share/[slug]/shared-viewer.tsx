@@ -15,7 +15,8 @@ export default function SharedViewer({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const { theme, setTheme } = useTheme()
-  const router = useNavigate()
+  const navigate = useNavigate()
+  const [isForking, setIsForking] = useState(false)
 
   useEffect(() => {
     CloudSync.fetchSharedProject(slug)
@@ -34,16 +35,22 @@ export default function SharedViewer({ slug }: { slug: string }) {
     setTheme(theme === "dark" ? "light" : "dark")
   }
 
-  const handleFork = () => {
-    if (!data) return
-    const project = ProjectManager.createProject(`Fork of ${slug}`, "Forked from shared link")
-    ProjectManager.updateProjectData(project.id, {
-      elements: data.elements || [],
-      appState: data.appState || {},
-      files: data.files || {},
-      libraryItems: data.libraryItems || []
-    })
-    navigate(`/${project.shortId}`)
+  const handleFork = async () => {
+    if (!data || isForking) return
+    setIsForking(true)
+    try {
+      const project = ProjectManager.createProject(`Fork of ${slug}`, "Forked from shared link")
+      ProjectManager.updateProjectData(project.id, {
+        elements: data.elements || [],
+        appState: data.appState || {},
+        files: data.files || {},
+        libraryItems: data.libraryItems || []
+      })
+      navigate(`/${project.shortId}`)
+    } catch (err) {
+      console.error("Fork failed:", err)
+      setIsForking(false)
+    }
   }
 
   const excalidrawTheme = theme === "dark" ? THEME.DARK : THEME.LIGHT
@@ -100,9 +107,13 @@ export default function SharedViewer({ slug }: { slug: string }) {
           <Button variant="outline" size="sm" onClick={toggleTheme}>
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
-          <Button variant="default" size="sm" onClick={handleFork}>
-            <GitFork className="w-4 h-4 mr-2" />
-            Fork & Edit
+          <Button variant="default" size="sm" onClick={handleFork} disabled={isForking}>
+            {isForking ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <GitFork className="w-4 h-4 mr-2" />
+            )}
+            {isForking ? "Forking..." : "Fork & Edit"}
           </Button>
         </div>
       </div>
