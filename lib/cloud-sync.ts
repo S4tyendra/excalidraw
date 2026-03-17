@@ -1,4 +1,4 @@
-export const API_BASE = "https://drawdevhinapi.2k24.workers.dev";
+export const API_BASE = "https://draw-api.devh.in";
 
 // Shape of a server project list item
 export interface ServerProjectMeta {

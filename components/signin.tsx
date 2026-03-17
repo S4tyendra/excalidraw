@@ -25,13 +25,13 @@ export default function Signin() {
 
   const handleSignIn = () => {
     const origin = window.location.origin;
-    window.location.href = `https://drawdevhinapi.2k24.workers.dev/auth/signin?origin=${encodeURIComponent(origin)}`;
+    window.location.href = `https://draw-api.devh.in/auth/signin?origin=${encodeURIComponent(origin)}`;
   };
 
   const handleSignOut = async (removeData: boolean) => {
     try {
       if (session) {
-        await fetch("https://drawdevhinapi.2k24.workers.dev/auth/signout", {
+        await fetch("https://draw-api.devh.in/auth/signout", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${session}`,
