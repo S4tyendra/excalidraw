@@ -6,9 +6,12 @@
     "build": "vinext build",
     "dev": "vinext dev --turbo",
     "lint": "vinext lint",
-    "start": "vinext start"
+    "start": "vinext start",
+    "dev:vinext": "vite dev --port 3001",
+    "build:vinext": "vite build"
   },
   "dependencies": {
+    "@cloudflare/vite-plugin": "^1.29.0",
     "@excalidraw/excalidraw": "^0.18.0-864353b",
     "@hookform/resolvers": "^3.10.0",
     "@libsql/client": "^0.17.0",
@@ -76,5 +79,6 @@
     "typescript": "^5",
     "vinext": "^0.0.30",
     "vite": "^8.0.0"
-  }
+  },
+  "type": "module"
 }

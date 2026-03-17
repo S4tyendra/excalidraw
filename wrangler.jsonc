@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "draw-devh-in",
+  "account_id": "2fff71b39e84b0e09ab12a300f75ba73",
+  "compatibility_date": "2026-03-17",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "main": "./worker/index.ts",
+  "assets": {
+    "not_found_handling": "none",
+    "binding": "ASSETS"
+  },
+  "images": {
+    "binding": "IMAGES"
+  },
+  "route": {
+    "custom_domain": true,
+    "pattern": "draw.devh.in",
+  }
+}
